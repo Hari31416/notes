@@ -658,62 +658,7 @@
             text-decoration: line-through;
         }
 
-        /* Parallelism Selector Buttons Group */
-        .topology-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.25rem;
-            flex-wrap: wrap;
-        }
 
-        .topology-tab {
-            flex: 1;
-            min-width: 140px;
-            padding: 0.6rem;
-            text-align: center;
-            background-color: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-family: var(--font-heading);
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .topology-tab:hover {
-            color: var(--text-main);
-            background-color: var(--border-soft);
-        }
-
-        .topology-tab.active {
-            background-color: var(--accent-color);
-            color: #ffffff;
-            border-color: var(--accent-color);
-        }
-
-        .topology-diagram-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1.5rem;
-            background-color: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-
-        .topology-desc {
-            margin-top: 1.25rem;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            color: var(--text-main);
-            text-align: center;
-            background-color: var(--border-soft);
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            width: 100%;
-        }
     </style>
 </head>
 
@@ -1221,93 +1166,7 @@
                     </li>
                 </ul>
 
-                <!-- WIDGET 4 -->
-                <div class="widget-card" style="margin-top: 1.5rem;">
-                    <div class="topology-tabs">
-                        <button class="topology-tab active" data-topo="single">Single-Node Monolith</button>
-                        <button class="topology-tab" data-topo="sharded">Sharded Cluster Matrix</button>
-                        <button class="topology-tab" data-topo="hybrid">Hybrid Router Gateway</button>
-                        <button class="topology-tab" data-topo="tenant">Multi-Tenant Namespaces</button>
-                    </div>
 
-                    <div class="topology-diagram-panel">
-                        <svg viewBox="0 0 600 240" width="100%" height="auto" style="max-width: 500px;">
-                            <!-- Gateway Router Base Layout -->
-                            <rect class="topology-router" x="220" y="20" width="160" height="40" rx="6" fill="#f8fafc"
-                                stroke="#64748b" stroke-width="2" />
-                            <text x="300" y="45" font-family="Outfit" font-size="14" font-weight="700"
-                                text-anchor="middle" fill="#0f172a">API Routing Gateway</text>
-
-                            <!-- DB Nodes Array -->
-                            <!-- Shard 0 -->
-                            <rect class="topology-db-node" x="50" y="140" width="100" height="60" rx="6" fill="#eff6ff"
-                                stroke="#0d9488" stroke-width="2" />
-                            <text x="100" y="175" font-family="Outfit" font-size="14" font-weight="700"
-                                text-anchor="middle" fill="#0f172a">DB Shard 0</text>
-
-                            <!-- Shard 1 -->
-                            <rect class="topology-db-node" x="180" y="140" width="100" height="60" rx="6" fill="#f1f5f9"
-                                stroke="#cbd5e1" stroke-width="2" />
-                            <text x="230" y="175" font-family="Outfit" font-size="14" font-weight="700"
-                                text-anchor="middle" fill="#0f172a">DB Shard 1</text>
-
-                            <!-- Shard 2 -->
-                            <rect class="topology-db-node" x="310" y="140" width="100" height="60" rx="6" fill="#f1f5f9"
-                                stroke="#cbd5e1" stroke-width="2" />
-                            <text x="360" y="175" font-family="Outfit" font-size="14" font-weight="700"
-                                text-anchor="middle" fill="#0f172a">DB Shard 2</text>
-
-                            <!-- Shard 3 -->
-                            <rect class="topology-db-node" x="440" y="140" width="100" height="60" rx="6" fill="#f1f5f9"
-                                stroke="#cbd5e1" stroke-width="2" />
-                            <text x="490" y="175" font-family="Outfit" font-size="14" font-weight="700"
-                                text-anchor="middle" fill="#0f172a">DB Shard 3</text>
-
-                            <!-- Dispatch Routing Lines -->
-                            <line x1="260" y1="60" x2="100" y2="140" stroke="#0d9488" stroke-width="2"
-                                marker-end="url(#arrow-route)" />
-                            <line x1="285" y1="60" x2="230" y2="140" stroke="#cbd5e1" stroke-width="1"
-                                stroke-dasharray="3" />
-                            <line x1="315" y1="60" x2="360" y2="140" stroke="#cbd5e1" stroke-width="1"
-                                stroke-dasharray="3" />
-                            <line x1="340" y1="60" x2="490" y2="140" stroke="#cbd5e1" stroke-width="1"
-                                stroke-dasharray="3" />
-
-                            <!-- Routing Marker -->
-                            <marker id="arrow-route" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6"
-                                markerHeight="6" orient="auto-start-reverse">
-                                <path d="M 0 2 L 8 5 L 0 8 z" fill="#0d9488" />
-                            </marker>
-                        </svg>
-
-                        <div id="topology-desc-text" class="topology-desc">
-                            <strong>Single-Node Monolith:</strong> Direct collection index queries executed inside
-                            isolated processing engines. Vulnerable to query queue degradation and immediate RAM Wall
-                            ceilings under massive citizen interactions.
-                        </div>
-                    </div>
-                </div>
-
-                <div class="code-container">
-                    <div class="code-header">
-                        <div class="code-label">qdrant_hybrid_collection.json</div>
-                        <button class="copy-btn">Copy</button>
-                    </div>
-                    <pre><code>{
-  <span class="st">"vectors"</span>: {
-    <span class="st">"dense_image"</span>: { <span class="st">"size"</span>: 1536, <span class="st">"distance"</span>: <span class="st">"Cosine"</span> },
-    <span class="st">"sparse_text"</span>: { <span class="st">"size"</span>: 30522, <span class="st">"distance"</span>: <span class="st">"Dot"</span> }
-  },
-  <span class="st">"quantization_config"</span>: {
-    <span class="st">"scalar"</span>: {
-      <span class="st">"type"</span>: <span class="st">"int8"</span>,
-      <span class="st">"quantile"</span>: 0.99,
-      <span class="st">"always_ram"</span>: <span class="kw">true</span>
-    }
-  },
-  <span class="st">"shard_number"</span>: 6
-}</code></pre>
-                </div>
             </section>
         </main>
     </div>
@@ -1320,7 +1179,6 @@
             initAnnSizingWidget();
             initQuantizationPreviewWidget();
             initRerankingLiftWidget();
-            initTopologyMapperWidget();
         });
 
         // Also run immediately in case the script is loaded after DOMContentLoaded
@@ -1598,56 +1456,7 @@
             updateReranking();
         }
 
-        /* ==========================================================================
-           Widget 4: Distributed Sharding Topology Architect Logic
-           ========================================================================== */
-        function initTopologyMapperWidget() {
-            const tabs = document.querySelectorAll('.topology-tab');
-            const descEl = document.getElementById('topology-desc-text');
-            const nodes = document.querySelectorAll('.topology-db-node');
-            const gateways = document.querySelectorAll('.topology-router');
 
-            if (!tabs.length || !descEl) return;
-
-            const descriptors = {
-                'single': "<strong>Single-Node Monolith:</strong> Direct collection index queries executed inside isolated processing engines. Vulnerable to query queue degradation and immediate RAM Wall ceilings under massive citizen interactions.",
-                'sharded': "<strong>Distributed Sharded Cluster:</strong> Splits vector indices into disjoint shard segments partitioned across distributed worker instances. Queries execute concurrently across shards, dramatically elevating overall platform Queries Per Second (QPS) capacity horizontally.",
-                'hybrid': "<strong>Hybrid Router Gateways:</strong> Restructures intake streams to merge sparse keyword lookup (BM25) with deep dense embeddings alongside strict user metadata pre-filtering constraints. Bypasses irrelevant shard lookups entirely.",
-                'tenant': "<strong>Multi-Tenant Isolated Namespaces:</strong> Partitions vector storage spaces into hard access-restricted virtual compartments. Enforces explicit CPU/Memory compute resource limit quotas to prevent abusive concurrent queries from generating disruptive 'noisy neighbor' processing bottlenecks."
-            };
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-
-                    const target = tab.dataset.topo;
-                    descEl.innerHTML = descriptors[target] || descriptors['single'];
-
-                    // Adjust SVG element rendering dynamically
-                    nodes.forEach((node, idx) => {
-                        if (target === 'single') {
-                            if (idx === 0) {
-                                node.setAttribute('fill', '#eff6ff');
-                                node.setAttribute('stroke', '#0d9488');
-                            } else {
-                                node.setAttribute('fill', '#f1f5f9');
-                                node.setAttribute('stroke', '#cbd5e1');
-                            }
-                        } else if (target === 'sharded') {
-                            node.setAttribute('fill', '#f0fdfa');
-                            node.setAttribute('stroke', '#0d9488');
-                        } else if (target === 'tenant') {
-                            node.setAttribute('fill', '#fdf4ff');
-                            node.setAttribute('stroke', '#c084fc');
-                        } else {
-                            node.setAttribute('fill', '#f0fdfa');
-                            node.setAttribute('stroke', '#0d9488');
-                        }
-                    });
-                });
-            });
-        }
 
     </script>
 </body>

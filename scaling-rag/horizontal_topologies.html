@@ -511,158 +511,7 @@
             margin-top: 0.2rem;
         }
 
-        /* Cluster Router Load Map representation */
-        .cluster-map {
-            display: flex;
-            gap: 0.5rem;
-            padding: 1rem;
-            background-color: var(--border-soft);
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            align-items: center;
-            justify-content: space-around;
-        }
 
-        .cluster-node {
-            padding: 0.6rem 1rem;
-            border-radius: 6px;
-            font-family: var(--font-heading);
-            font-size: 0.85rem;
-            font-weight: 700;
-            text-align: center;
-            background-color: #ffffff;
-            border: 2px solid var(--border-color);
-            color: var(--text-muted);
-            transition: all 0.3s ease;
-            min-width: 100px;
-        }
-
-        .cluster-node.active {
-            background-color: var(--accent-light);
-            border-color: var(--accent-color);
-            color: var(--accent-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1);
-        }
-
-        .cluster-node.spillover {
-            background-color: var(--success-light);
-            border-color: var(--success-color);
-            color: #065f46;
-        }
-
-        .cluster-node.degraded {
-            background-color: var(--danger-light);
-            border-color: var(--danger-color);
-            color: var(--danger-color);
-        }
-
-        /* Region Display cards */
-        .region-card-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .region-card {
-            background-color: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-            transition: all 0.3s ease;
-        }
-
-        .region-card.overloaded {
-            border-color: var(--warning-color);
-            background-color: #fffbeb;
-        }
-
-        .region-card.shifted {
-            border-color: var(--accent-color);
-            background-color: var(--accent-light);
-        }
-
-        .region-title {
-            font-family: var(--font-heading);
-            font-weight: 700;
-            font-size: 0.95rem;
-            color: var(--text-heading);
-            margin-bottom: 0.5rem;
-        }
-
-        .region-bar-wrap {
-            width: 100%;
-            height: 12px;
-            background-color: var(--border-soft);
-            border-radius: 6px;
-            overflow: hidden;
-            margin: 0.5rem 0;
-        }
-
-        .region-bar-fill {
-            height: 100%;
-            background-color: var(--accent-color);
-            transition: width 0.4s ease, background-color 0.4s ease;
-        }
-
-        /* Topology Selection button matrix */
-        .topology-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.25rem;
-            flex-wrap: wrap;
-        }
-
-        .topology-tab {
-            flex: 1;
-            min-width: 130px;
-            padding: 0.6rem;
-            text-align: center;
-            background-color: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            font-family: var(--font-heading);
-            font-weight: 600;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-
-        .topology-tab:hover {
-            color: var(--text-main);
-            background-color: var(--border-soft);
-        }
-
-        .topology-tab.active {
-            background-color: var(--accent-color);
-            color: #ffffff;
-            border-color: var(--accent-color);
-        }
-
-        .topology-diagram-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1.5rem;
-            background-color: #ffffff;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-        }
-
-        .topology-desc {
-            margin-top: 1.25rem;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            color: var(--text-main);
-            text-align: center;
-            background-color: var(--border-soft);
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            width: 100%;
-        }
     </style>
 </head>
 
@@ -832,69 +681,7 @@
                     </li>
                 </ul>
 
-                <!-- WIDGET 1 -->
-                <div class="widget-card">
-                    <div class="widget-header">
-                        <h4>Context-Aware Dispatch Routing Engine</h4>
-                        <p>Evaluate routing assignment distribution paths, systemic cache retention hit rates, and
-                            downstream Time-To-First-Token performance.</p>
-                    </div>
 
-                    <div class="widget-grid">
-                        <div class="widget-field">
-                            <label for="route-profile">Incoming Stream Profile</label>
-                            <select id="route-profile" class="widget-select">
-                                <option value="shared" selected>Shared Context Prefix (System Prompts &amp; Static RAG
-                                    Instructions)</option>
-                                <option value="ephemeral">Randomized Ephemeral Chats (High Variance Content Streams)
-                                </option>
-                                <option value="burst">Concurrent Enterprise Task Pipelines (Uniform Batch Queries)
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="widget-field">
-                            <label for="route-algo">Load Balancing Dispatch Algorithm</label>
-                            <select id="route-algo" class="widget-select">
-                                <option value="rr">Naive Round-Robin (Uniform Scatter / Low Cache Utility)</option>
-                                <option value="least">Least Connections (Targets Worker Availability / No Affinity)
-                                </option>
-                                <option value="prefix" selected>KV-Cache-Aware Routing (Prefix Trie Consistent Hashing)
-                                </option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="widget-display-panel">
-                        <span
-                            style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">Target
-                            Worker Node Route Affinity Matrix</span>
-                        <div class="cluster-map">
-                            <div class="cluster-node">Worker Pod-A</div>
-                            <div class="cluster-node">Worker Pod-B</div>
-                            <div class="cluster-node">Worker Pod-C</div>
-                            <div class="cluster-node">Worker Pod-D</div>
-                        </div>
-
-                        <div class="metrics-row" style="margin-top: 0;">
-                            <div class="metric-box">
-                                <div class="metric-label">Systemic Cache Hit Rate</div>
-                                <div id="route-hit-val" class="metric-val" style="color: var(--accent-hover);">--%</div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="metric-label">Average TTFT Latency</div>
-                                <div id="route-ttft-val" class="metric-val">-- ms</div>
-                            </div>
-                            <div class="metric-box"
-                                style="background-color: var(--accent-light); border-color: #bfdbfe;">
-                                <div class="metric-label" style="color: var(--accent-hover);">Processing Speedup Factor
-                                </div>
-                                <div id="route-speed-val" class="metric-val"
-                                    style="color: var(--accent-hover); font-size: 1.25rem;">--</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="callout">
                     <p>
@@ -1007,52 +794,7 @@
                     interactions.
                 </p>
 
-                <!-- WIDGET 3 -->
-                <div class="widget-card" style="margin-top: 2rem;">
-                    <div class="widget-header">
-                        <h4>Multi-Region Global Traffic Shift Modeler</h4>
-                        <p>Simulate continuous resource allocation metrics, regional capacity saturations, and dynamic
-                            cross-border spillover routing execution actions.</p>
-                    </div>
 
-                    <div class="topology-tabs">
-                        <button class="topology-tab shift-tab active" data-shift="americas">US Core Peak Hours</button>
-                        <button class="topology-tab shift-tab" data-shift="emea">EMEA Midday Load</button>
-                        <button class="topology-tab shift-tab" data-shift="apac">APAC High Spike</button>
-                        <button class="topology-tab shift-tab" data-shift="sync">Global Baseline Sync</button>
-                    </div>
-
-                    <div class="region-card-grid">
-                        <div class="region-card">
-                            <div class="region-title">Americas Cloud Hub</div>
-                            <div class="region-bar-wrap">
-                                <div class="region-bar-fill" style="width: 50%;"></div>
-                            </div>
-                            <span class="region-load-pct"
-                                style="font-size: 0.85rem; font-family: var(--font-mono); font-weight: 600;">--%</span>
-                        </div>
-                        <div class="region-card">
-                            <div class="region-title">European Cloud Hub</div>
-                            <div class="region-bar-wrap">
-                                <div class="region-bar-fill" style="width: 50%;"></div>
-                            </div>
-                            <span class="region-load-pct"
-                                style="font-size: 0.85rem; font-family: var(--font-mono); font-weight: 600;">--%</span>
-                        </div>
-                        <div class="region-card">
-                            <div class="region-title">Asia-Pacific Cloud Hub</div>
-                            <div class="region-bar-wrap">
-                                <div class="region-bar-fill" style="width: 50%;"></div>
-                            </div>
-                            <span class="region-load-pct"
-                                style="font-size: 0.85rem; font-family: var(--font-mono); font-weight: 600;">--%</span>
-                        </div>
-                    </div>
-
-                    <div id="region-shift-desc" class="topology-desc" style="margin-top: 0; text-align: left;">
-                        --
-                    </div>
-                </div>
             </section>
 
             <!-- SECTION 5 -->
@@ -1091,47 +833,7 @@
                     </li>
                 </ul>
 
-                <!-- WIDGET 4 -->
-                <div class="widget-card" style="margin-top: 1.5rem;">
-                    <div class="topology-tabs">
-                        <button class="topology-tab hw-tab active" data-hw="frontier">Frontier Arrays</button>
-                        <button class="topology-tab hw-tab" data-hw="moe">MoE Expert Pools</button>
-                        <button class="topology-tab hw-tab" data-hw="edge">Ingestion Gateways</button>
-                    </div>
 
-                    <div class="topology-diagram-panel">
-                        <svg viewBox="0 0 600 220" width="100%" height="auto" style="max-width: 500px;">
-                            <!-- Ingestion Nodes Top Layer -->
-                            <rect class="hw-node-elem" x="100" y="20" width="100" height="35" rx="4" fill="#eff6ff"
-                                stroke="#2563eb" stroke-width="2" />
-                            <text x="150" y="42" font-family="Outfit" font-size="12" font-weight="700"
-                                text-anchor="middle" fill="#0f172a">Gateway A</text>
-
-                            <rect class="hw-node-elem" x="400" y="20" width="100" height="35" rx="4" fill="#eff6ff"
-                                stroke="#2563eb" stroke-width="2" />
-                            <text x="450" y="42" font-family="Outfit" font-size="12" font-weight="700"
-                                text-anchor="middle" fill="#0f172a">Gateway B</text>
-
-                            <!-- Internal Compute Core Tier -->
-                            <rect class="hw-node-elem" x="160" y="100" width="280" height="80" rx="8" fill="#f8fafc"
-                                stroke="#64748b" stroke-width="2" />
-                            <text x="300" y="130" font-family="Outfit" font-size="14" font-weight="700"
-                                text-anchor="middle" fill="#0f172a">Compute Fabric Backbones</text>
-                            <text x="300" y="155" font-family="Inter" font-size="11" fill="#64748b"
-                                text-anchor="middle">Dynamic Multi-Tier Pipeline Routing</text>
-
-                            <!-- Connectors -->
-                            <line x1="150" y1="55" x2="220" y2="100" stroke="#2563eb" stroke-width="2" />
-                            <line x1="450" y1="55" x2="380" y2="100" stroke="#2563eb" stroke-width="2" />
-                        </svg>
-
-                        <div id="hw-desc-text" class="topology-desc">
-                            <strong>Monolith H100 GPU Clusters:</strong> Deploys absolute deep frontier networks (e.g.,
-                            Llama-3-70B or massive self-attention models) utilizing NVLink interconnect nodes. Processes
-                            extremely low-latency generations but triggers massive capital expenditures.
-                        </div>
-                    </div>
-                </div>
             </section>
         </main>
     </div>
@@ -1141,10 +843,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initCodeCopyButtons();
-            initRoutingEngineWidget();
             initAutoscalerSimulatorWidget();
-            initRegionShiftWidget();
-            initHardwareTopologyWidget();
         });
 
         // Also run immediately in case the script is loaded after DOMContentLoaded
@@ -1177,77 +876,7 @@
             });
         }
 
-        /* ==========================================================================
-           Widget 1: Context-Aware Dispatch Routing Engine Logic
-           ========================================================================== */
-        function initRoutingEngineWidget() {
-            const profileSelect = document.getElementById('route-profile');
-            const algoSelect = document.getElementById('route-algo');
 
-            const hitRateEl = document.getElementById('route-hit-val');
-            const ttftEl = document.getElementById('route-ttft-val');
-            const speedEl = document.getElementById('route-speed-val');
-            const nodes = document.querySelectorAll('.cluster-node');
-
-            if (!profileSelect || !algoSelect) return;
-
-            function updateRouting() {
-                const profile = profileSelect.value;
-                const algo = algoSelect.value;
-
-                let hitRate = 0;
-                let ttft = 0;
-                let speedup = "1.0x";
-
-                // Reset visual node representation styling
-                nodes.forEach(node => node.className = 'cluster-node');
-
-                if (algo === 'rr') {
-                    // Naive Round-Robin scatters incoming sessions uniformly across arbitrary worker nodes
-                    hitRate = profile === 'shared' ? 24 : profile === 'ephemeral' ? 5 : 12;
-                    ttft = profile === 'shared' ? 140 : 220;
-                    speedup = "1.0x (Baseline Uncached Compute)";
-
-                    // Highlight all nodes dynamically illustrating scattered continuous round-robin distribution paths
-                    nodes.forEach(node => node.classList.add('active'));
-                } else if (algo === 'least') {
-                    // Least Connections targets optimal processing availability but ignores cached memory topology maps
-                    hitRate = profile === 'shared' ? 32 : profile === 'ephemeral' ? 8 : 16;
-                    ttft = profile === 'shared' ? 115 : 205;
-                    speedup = "1.2x (Reduced API Queue Depths)";
-
-                    // Randomly tag single target node
-                    nodes[1].classList.add('active');
-                    nodes[2].classList.add('active');
-                } else if (algo === 'prefix') {
-                    // KV-Cache-Aware Routing utilizes Prefix Tries and Consistent Hashing to match incoming strings to pre-cached worker pod contexts
-                    hitRate = profile === 'shared' ? 94 : profile === 'ephemeral' ? 48 : 82;
-                    ttft = profile === 'shared' ? 18 : profile === 'ephemeral' ? 95 : 38;
-                    speedup = profile === 'shared' ? "7.8x (Instant TTFT via KV Cache Hits)" : "2.3x (Optimized Context Lookup)";
-
-                    // Target specific node reliably to demonstrate prefix trie affinity alignment
-                    nodes[0].classList.add('active');
-                    nodes[0].innerHTML = "Worker Pod-A<br/><span style='font-size:0.7rem;color:#2563eb;'>★ 100% Prefix Affinity</span>";
-                }
-
-                // Restore generic labels for un-targeted items
-                nodes.forEach((node, idx) => {
-                    if (!node.classList.contains('active')) {
-                        const names = ["Worker Pod-A", "Worker Pod-B", "Worker Pod-C", "Worker Pod-D"];
-                        node.innerHTML = names[idx];
-                    }
-                });
-
-                hitRateEl.textContent = `${hitRate}%`;
-                ttftEl.textContent = `${ttft} ms`;
-                speedEl.textContent = speedup;
-            }
-
-            profileSelect.addEventListener('change', updateRouting);
-            algoSelect.addEventListener('change', updateRouting);
-
-            updateRouting();
-        }
 
         /* ==========================================================================
            Widget 2: Predictive Queue Depth & Cluster Autoscaling Simulator Logic
@@ -1311,121 +940,7 @@
             updateAutoscaling();
         }
 
-        /* ==========================================================================
-           Widget 3: Multi-Region Global Traffic Shift Modeler Logic
-           ========================================================================== */
-        function initRegionShiftWidget() {
-            const tabs = document.querySelectorAll('.shift-tab');
-            const cards = document.querySelectorAll('.region-card');
-            const bars = document.querySelectorAll('.region-bar-fill');
-            const vals = document.querySelectorAll('.region-load-pct');
-            const descEl = document.getElementById('region-shift-desc');
 
-            if (!tabs.length || !cards.length) return;
-
-            const dataProfiles = {
-                'americas': {
-                    loads: [94, 35, 15],
-                    status: ['overloaded', 'shifted', 'normal'],
-                    desc: "<strong>US Peak Hours Spillover Routing:</strong> Americas GPU clusters hit maximum resource ceilings. Gateway API modules intercept incoming non-latency-critical background summarization streams and forward execution instructions directly to idle European cloud nodes to protect real-time domestic interactions."
-                },
-                'emea': {
-                    loads: [25, 91, 40],
-                    status: ['normal', 'overloaded', 'shifted'],
-                    desc: "<strong>EMEA Midday Diurnal Profile:</strong> European regional data centers experience intensive connection processing queues. Overload overflow layers shift low-priority batch execution matrices directly over high-speed backbone connections targeting active Asian computing infrastructures."
-                },
-                'apac': {
-                    loads: [15, 20, 96],
-                    status: ['shifted', 'normal', 'overloaded'],
-                    desc: "<strong>APAC Primary Load Processing:</strong> High citizen concurrent connections overwhelm localized server hardware arrays. Automated dynamic traffic balancing pathways spill over arbitrary operational queries directly towards baseline tier clusters hosted across off-peak US data centers."
-                },
-                'sync': {
-                    loads: [55, 52, 58],
-                    status: ['normal', 'normal', 'normal'],
-                    desc: "<strong>Global Base Synchronization:</strong> Uniform processing balance maintained globally. Platform infrastructure achieves optimal economic pricing structures by matching baseline tier cluster resource sizing directly against persistent continuous traffic distribution metrics."
-                }
-            };
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-
-                    const target = tab.dataset.shift;
-                    const profile = dataProfiles[target] || dataProfiles['sync'];
-
-                    descEl.innerHTML = profile.desc;
-
-                    cards.forEach((card, idx) => {
-                        card.className = 'region-card';
-                        if (profile.status[idx] !== 'normal') {
-                            card.classList.add(profile.status[idx]);
-                        }
-
-                        const loadPct = profile.loads[idx];
-                        vals[idx].textContent = `${loadPct}% Utilization`;
-                        bars[idx].style.width = `${loadPct}%`;
-
-                        // Adjust color coding
-                        if (loadPct > 90) {
-                            bars[idx].style.backgroundColor = 'var(--danger-color)';
-                            vals[idx].style.color = 'var(--danger-color)';
-                        } else if (profile.status[idx] === 'shifted') {
-                            bars[idx].style.backgroundColor = 'var(--accent-color)';
-                            vals[idx].style.color = 'var(--accent-hover)';
-                        } else {
-                            bars[idx].style.backgroundColor = 'var(--accent-color)';
-                            vals[idx].style.color = 'var(--text-main)';
-                        }
-                    });
-                });
-            });
-        }
-
-        /* ==========================================================================
-           Widget 4: Heterogeneous Hardware Topology Selector Logic
-           ========================================================================== */
-        function initHardwareTopologyWidget() {
-            const tabs = document.querySelectorAll('.hw-tab');
-            const descEl = document.getElementById('hw-desc-text');
-            const nodes = document.querySelectorAll('.hw-node-elem');
-
-            if (!tabs.length || !descEl) return;
-
-            const descriptions = {
-                'frontier': "<strong>Monolith H100 GPU Clusters:</strong> Deploys absolute deep frontier networks (e.g., Llama-3-70B or massive self-attention models) utilizing NVLink interconnect nodes. Processes extremely low-latency generations but triggers massive capital expenditures.",
-                'moe': "<strong>Tiered Mixture-of-Experts (MoE) Architecture:</strong> Evaluates incoming processing streams dynamically across localized MoE routing network gates. Activates specific expert processing matrices independently, drastically cutting overall single token processing memory sizes.",
-                'edge': "<strong>Heterogeneous Ingestion Routing Pools:</strong> Structures initial access interfaces over cost-efficient hardware tiers. Low-latency edge router nodes evaluate explicit user contexts to discard prompt injection payloads instantly, shielding central cluster backbones."
-            };
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-
-                    const target = tab.dataset.hw;
-                    descEl.innerHTML = descriptions[target] || descriptions['frontier'];
-
-                    nodes.forEach((node, idx) => {
-                        if (target === 'frontier') {
-                            node.setAttribute('fill', '#eff6ff');
-                            node.setAttribute('stroke', '#2563eb');
-                        } else if (target === 'moe') {
-                            if (idx % 2 === 0) {
-                                node.setAttribute('fill', '#fdf4ff');
-                                node.setAttribute('stroke', '#c084fc');
-                            } else {
-                                node.setAttribute('fill', '#f0fdfa');
-                                node.setAttribute('stroke', '#0d9488');
-                            }
-                        } else {
-                            node.setAttribute('fill', '#f8fafc');
-                            node.setAttribute('stroke', '#64748b');
-                        }
-                    });
-                });
-            });
-        }
 
     </script>
 </body>

@@ -51,7 +51,6 @@
     --warning-color: #f59e0b;
     --danger-color: #ef4444;
     --danger-light: #fee2e2;
-    --broker-color: #f59e0b;
     --storage-color: #8b5cf6;
 }
 
@@ -475,56 +474,7 @@ th {
     margin-top: 0.2rem;
 }
 
-/* Broker Queues UI representation */
-.broker-track {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background-color: var(--border-soft);
-    border: 1px solid var(--border-color);
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-    position: relative;
-    overflow: hidden;
-}
 
-.broker-node {
-    padding: 0.5rem 1rem;
-    background-color: #ffffff;
-    border: 2px solid var(--broker-color);
-    border-radius: 6px;
-    font-family: var(--font-heading);
-    font-weight: 700;
-    font-size: 0.85rem;
-    color: var(--text-heading);
-    z-index: 2;
-}
-
-.broker-pipeline {
-    flex-grow: 1;
-    height: 4px;
-    background-color: #cbd5e1;
-    margin: 0 1rem;
-    position: relative;
-}
-
-.broker-packet {
-    position: absolute;
-    top: -6px;
-    left: 0;
-    width: 16px;
-    height: 16px;
-    background-color: var(--accent-color);
-    border-radius: 50%;
-    opacity: 0;
-    transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
-}
-
-.broker-packet.animate {
-    opacity: 1;
-    left: 100%;
-}
 
 /* LangGraph Rehydration Visual elements */
 .checkpoint-timeline {
@@ -656,52 +606,7 @@ th {
     color: #34d399;
 }
 
-/* Topology Selection Button Switchers */
-.topology-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.25rem;
-    flex-wrap: wrap;
-}
 
-.topology-tab {
-    flex: 1;
-    min-width: 130px;
-    padding: 0.6rem;
-    text-align: center;
-    background-color: #ffffff;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-family: var(--font-heading);
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-
-.topology-tab:hover {
-    color: var(--text-main);
-    background-color: var(--border-soft);
-}
-
-.topology-tab.active {
-    background-color: var(--accent-color);
-    color: #ffffff;
-    border-color: var(--accent-color);
-}
-
-.topology-desc {
-    margin-top: 1.25rem;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--text-main);
-    text-align: center;
-    background-color: var(--border-soft);
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    width: 100%;
-}
 
 </style>
 </head>
@@ -791,73 +696,7 @@ th {
                     </li>
                 </ul>
 
-                <!-- WIDGET 1 -->
-                <div class="widget-card">
-                    <div class="widget-header">
-                        <h4>Event-Driven Task Ingestion &amp; Broker Queue Engine</h4>
-                        <p>Simulate asynchronous message queue payload routing, throughput capacities, and active task
-                            assignment processing metrics.</p>
-                    </div>
 
-                    <div class="widget-grid">
-                        <div class="widget-field">
-                            <label for="broker-profile">Ingestion Task Complexity Profile</label>
-                            <select id="broker-profile" class="widget-select">
-                                <option value="single" selected>Standard User Inquiry Task (Single Routing Prompt)
-                                </option>
-                                <option value="batch">Massive Multi-Agent Synthesis (Heavy Reasoning Plan)</option>
-                                <option value="stream">Continuous API Telemetry Array (High Concurrency Loop)</option>
-                            </select>
-                        </div>
-
-                        <div class="widget-field">
-                            <label for="broker-type">Backbone Message Broker Infrastructure</label>
-                            <select id="broker-type" class="widget-select">
-                                <option value="kafka" selected>Apache Kafka (Partitioned Sequential Append Logs)
-                                </option>
-                                <option value="rabbitmq">RabbitMQ (Fine-Grained AMQP Message Routing Queues)</option>
-                                <option value="redis">Redis Streams (Low Overhead Lightweight Consumer Groups)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="widget-display-panel">
-                        <div class="broker-track">
-                            <div class="broker-node" style="border-color: #0284c7;">Ingress Gateway</div>
-                            <div class="broker-pipeline">
-                                <div id="broker-packet-anim" class="broker-packet"></div>
-                            </div>
-                            <div class="broker-node" style="border-color: #10b981;">Worker Node Pool</div>
-                        </div>
-
-                        <div style="text-align: center; margin-bottom: 1rem;">
-                            <button id="broker-ingest-btn" class="widget-btn">Ingest New Agentic Job</button>
-                        </div>
-
-                        <div id="broker-ack-status"
-                            style="font-size: 0.85rem; text-align: center; background-color: var(--border-soft); padding: 0.5rem; border-radius: 4px; margin-bottom: 1rem;">
-                            API Gateway Gateway Status: <strong style="color:var(--text-muted);">Idle (Awaiting Task
-                                Submission)</strong>
-                        </div>
-
-                        <div class="metrics-row" style="margin-top: 0;">
-                            <div class="metric-box">
-                                <div class="metric-label">Ingestion Throughput</div>
-                                <div id="broker-tp-val" class="metric-val" style="color: var(--accent-color);">-- msg/s
-                                </div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="metric-label">Connection Block Ratio</div>
-                                <div id="broker-block-val" class="metric-val" style="color: var(--success-color);">--%
-                                </div>
-                            </div>
-                            <div class="metric-box">
-                                <div class="metric-label">Average Ingestion Latency</div>
-                                <div id="broker-lat-val" class="metric-val">-- ms</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <div class="callout">
                     <p>
@@ -1109,32 +948,7 @@ th {
                         host planes and secure ephemeral sandboxed microVM environments.</figcaption>
                 </figure>
 
-                <!-- WIDGET 4 -->
-                <div class="widget-card">
-                    <div class="widget-header">
-                        <h4>Ephemeral Sandbox Execution Lifecycle Controller</h4>
-                        <p>Observe sequential execution operations tracing microVM initialization, workspace file
-                            bindings, and automatic sandbox teardowns.</p>
-                    </div>
 
-                    <div class="topology-tabs">
-                        <button class="topology-tab vm-tab active" data-vm="python">Untrusted Python Code</button>
-                        <button class="topology-tab vm-tab" data-vm="viz">Data Visualization Tasks</button>
-                        <button class="topology-tab vm-tab" data-vm="system">System Commands</button>
-                    </div>
-
-                    <div id="vm-desc-text" class="topology-desc"
-                        style="margin-top: 0; text-align: left; font-size: 0.9rem;">
-                        --
-                    </div>
-
-                    <div class="widget-display-panel" style="margin-top: 1rem;">
-                        <span
-                            style="font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Sandboxed
-                            Instance Execution Steps</span>
-                        <div id="vm-lifecycle-status"></div>
-                    </div>
-                </div>
                 <div class="callout"
                     style="border-left-color: var(--success-color); background-color: var(--success-light);">
                     <p>
@@ -1154,10 +968,8 @@ th {
 
 document.addEventListener('DOMContentLoaded', () => {
     initCodeCopyButtons();
-    initBrokerQueueWidget();
     initRehydrationWidget();
     initSseConsoleWidget();
-    initMicroVmWidget();
 });
 
 // Run immediate check
@@ -1190,79 +1002,7 @@ function initCodeCopyButtons() {
     });
 }
 
-/* ==========================================================================
-   Widget 1: Event-Driven Task Ingestion & Broker Queue Engine Logic
-   ========================================================================== */
-function initBrokerQueueWidget() {
-    const profileSelect = document.getElementById('broker-profile');
-    const typeSelect = document.getElementById('broker-type');
-    const ingestBtn = document.getElementById('broker-ingest-btn');
 
-    const tpVal = document.getElementById('broker-tp-val');
-    const blockVal = document.getElementById('broker-block-val');
-    const latVal = document.getElementById('broker-lat-val');
-    
-    const packetEl = document.getElementById('broker-packet-anim');
-    const ackStatusEl = document.getElementById('broker-ack-status');
-
-    if (!profileSelect || !typeSelect || !ingestBtn) return;
-
-    let isAnimating = false;
-
-    function updateMetrics() {
-        const profile = profileSelect.value;
-        const bType = typeSelect.value;
-
-        let throughput = 0;
-        let blockRatio = 0;
-        let avgLat = 0;
-
-        if (bType === 'kafka') {
-            // Apache Kafka optimized for absolute decoupled partitioned sequential append throughput
-            throughput = profile === 'single' ? 12500 : profile === 'batch' ? 4200 : 28000;
-            blockRatio = 0.01;
-            avgLat = profile === 'batch' ? 12 : 4;
-        } else if (bType === 'rabbitmq') {
-            // RabbitMQ targets fine-grained AMQP routing logic over raw un-indexed array streaming speeds
-            throughput = profile === 'single' ? 4500 : profile === 'batch' ? 1800 : 9200;
-            blockRatio = 0.05;
-            avgLat = profile === 'batch' ? 22 : 8;
-        } else if (bType === 'redis') {
-            // Redis Streams offers low-overhead lightweight local memory consumer assignments
-            throughput = profile === 'single' ? 18500 : profile === 'batch' ? 6400 : 35000;
-            blockRatio = 0.02;
-            avgLat = profile === 'batch' ? 8 : 2;
-        }
-
-        tpVal.textContent = `${throughput.toLocaleString()} msg/s`;
-        blockVal.textContent = `${blockRatio}%`;
-        latVal.textContent = `${avgLat} ms`;
-    }
-
-    profileSelect.addEventListener('change', updateMetrics);
-    typeSelect.addEventListener('change', updateMetrics);
-
-    ingestBtn.addEventListener('click', () => {
-        if (isAnimating) return;
-        isAnimating = true;
-
-        // Generate immediate Task ID return simulation to represent a non-blocking connection architecture
-        const randomId = "task_" + Math.random().toString(36).substr(2, 6);
-        ackStatusEl.innerHTML = `API Gateway Gateway Status: <strong style="color:var(--success-color);">202 Accepted</strong> | Assigned Trace ID: <code>${randomId}</code>`;
-        
-        packetEl.classList.remove('animate');
-        // Force reflow
-        void packetEl.offsetWidth;
-        packetEl.classList.add('animate');
-
-        setTimeout(() => {
-            packetEl.classList.remove('animate');
-            isAnimating = false;
-        }, 850);
-    });
-
-    updateMetrics();
-}
 
 /* ==========================================================================
    Widget 2: LangGraph State Recovery & Rehydration Modeler Logic
@@ -1439,62 +1179,7 @@ function initSseConsoleWidget() {
     startBtn.addEventListener('click', startStream);
 }
 
-/* ==========================================================================
-   Widget 4: Ephemeral Sandbox Execution Lifecycle Controller Logic
-   ========================================================================== */
-function initMicroVmWidget() {
-    const tabs = document.querySelectorAll('.vm-tab');
-    const descEl = document.getElementById('vm-desc-text');
-    const statusBox = document.getElementById('vm-lifecycle-status');
 
-    if (!tabs.length || !descEl || !statusBox) return;
-
-    const configs = {
-        'python': {
-            desc: "<strong>Untrusted LLM-Generated Python Scripts:</strong> Spawns an ephemeral microVM completely cut off from corporate virtual private cloud backbones. Executes dynamic pandas calculation layers or data science algorithms without exposing core system kernel execution paths.",
-            steps: ["1. Provision MicroVM (Firecracker)", "2. Sync User Workspace via gRPC", "3. Execute Python Subagent Code", "4. Export Target Dataset Files", "5. Destroy Ephemeral Environment"]
-        },
-        'viz': {
-            desc: "<strong>Data Visualization Rendering Tasks:</strong> Mounts graphics compilation binaries inside restricted secure memory profiles. Prevents infinite looping drawing operations from starving internal container compute instances.",
-            steps: ["1. Spawn Sandboxed Graphics Engine", "2. Mount Output Canvas Memory Buffer", "3. Render Generated Matplotlib Graphics", "4. Sync Generated PNG Images", "5. Unload Sandboxed Allocations"]
-        },
-        'system': {
-            desc: "<strong>System Utility Execution Commands:</strong> Implements bi-directional state synchronization pipelines forwarding execution parameters reliably inside tightly monitored ephemeral Linux containers.",
-            steps: ["1. Verify File Hash Authorization Maps", "2. Open gRPC Command Interface", "3. Run Requested Binary Executable", "4. Stream Stdout/Stderr logs via SSE", "5. Close File System Descriptors"]
-        }
-    };
-
-    tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            tabs.forEach(t => t.classList.remove('active'));
-            tab.classList.add('active');
-
-            const target = tab.dataset.vm;
-            const profile = configs[target] || configs['python'];
-
-            descEl.innerHTML = profile.desc;
-
-            // Render operational sequential tracking paths
-            statusBox.innerHTML = "";
-            profile.steps.forEach((stepText, idx) => {
-                const div = document.createElement('div');
-                div.style.padding = "0.4rem 0.75rem";
-                div.style.marginBottom = "0.4rem";
-                div.style.backgroundColor = idx === 2 ? "var(--accent-light)" : "#ffffff";
-                div.style.border = "1px solid var(--border-color)";
-                div.style.borderRadius = "4px";
-                div.style.fontSize = "0.85rem";
-                div.style.fontWeight = idx === 2 ? "700" : "500";
-                div.style.color = idx === 2 ? "var(--accent-hover)" : "var(--text-main)";
-                div.textContent = stepText;
-                statusBox.appendChild(div);
-            });
-        });
-    });
-
-    // Initialize defaults
-    tabs[0].click();
-}
 
 </script>
 </body>
