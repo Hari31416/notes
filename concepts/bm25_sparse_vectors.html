@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BM25 Search & Sparse Vectors: Step-by-Step Mechanics</title>
+    <meta name="description"
+        content="A comprehensive engineering guide detailing the internal mechanics of BM25 search, sparse vector generation, scoring algorithms, and neural extensions like SPLADE." />
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        /* Inlined from ./style.css */
+        /* Clean Minimalist Standalone Article Base Stylesheet */
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-body: #ffffff;
+            --text-main: #1e293b;
+            --text-heading: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --border-soft: #f1f5f9;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --code-bg: #0f172a;
+            --code-text: #f8fafc;
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-heading: "Outfit", sans-serif;
+            --font-mono: "Fira Code", monospace;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.75;
+            font-size: 1.05rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .layout-wrapper {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem 2rem 1.5rem;
+        }
+
+        .article-content {
+            width: 100%;
+        }
+
+        .article-header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .article-title {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-heading);
+            line-height: 1.2;
+        }
+
+        /* Table of Contents */
+        .table-of-contents {
+            background-color: var(--border-soft);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .toc-details summary {
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .toc-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .toc-details h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-heading);
+        }
+
+        .toc-toggle-icon {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .toc-details[open] .toc-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .toc-content {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .table-of-contents ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+
+        .table-of-contents ul ul {
+            padding-left: 1.25rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+            border-left: 1px solid #cbd5e1;
+        }
+
+        .table-of-contents li {
+            margin-bottom: 0.4rem;
+            line-height: 1.4;
+        }
+
+        .table-of-contents a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .table-of-contents ul ul a {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .table-of-contents a:hover {
+            text-decoration: underline;
+            color: var(--accent-hover);
+        }
+
+        /* Article Body Formatting */
+        h2 {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin: 3rem 0 1.25rem 0;
+            line-height: 1.3;
+        }
+
+        h3 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            margin: 2rem 0 1rem 0;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+        }
+
+        strong {
+            color: var(--text-heading);
+            font-weight: 600;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Figures & Images */
+        figure {
+            margin: 2.5rem 0;
+        }
+
+        figure img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: block;
+        }
+
+        figcaption {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Callouts */
+        .callout {
+            background-color: var(--accent-light);
+            border-left: 4px solid var(--accent-color);
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        .callout p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Code Blocks */
+        .code-container {
+            margin: 2rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .code-header {
+            background-color: #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .code-label {
+            color: #94a3b8;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+        }
+
+        .copy-btn {
+            background-color: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 0.15rem 0.5rem;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .copy-btn:hover {
+            background-color: #334155;
+            color: #f8fafc;
+        }
+
+        pre {
+            padding: 1.25rem 1rem;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--code-text);
+        }
+
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            background-color: #f1f5f9;
+            padding: 0.15rem 0.35rem;
+            border-radius: 4px;
+            color: #0f172a;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* Keyword Highlights */
+        .kw {
+            color: #c084fc;
+            font-weight: 500;
+        }
+
+        .fn {
+            color: #38bdf8;
+        }
+
+        .st {
+            color: #a5d6ff;
+        }
+
+        .cm {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .dc {
+            color: #34d399;
+        }
+
+        .pr {
+            color: #f472b6;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--text-heading);
+            background-color: #f8fafc;
+        }
+
+        /* Interactive Simulation Widgets Custom CSS */
+        .widget-container {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            margin: 2.5rem 0;
+            overflow: hidden;
+        }
+
+        .widget-header {
+            background-color: #f8fafc;
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .widget-header h4 {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin: 0;
+        }
+
+        .widget-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin: 0.25rem 0 0 0;
+        }
+
+        .widget-body {
+            padding: 1.5rem;
+        }
+
+        .widget-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .control-group label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            padding: 0.15rem 0.6rem;
+            border-radius: 16px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 700;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--accent-color);
+            cursor: pointer;
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .widget-visualization {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-soft);
+        }
+
+        .chart-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .bar-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .bar-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            height: 28px;
+        }
+
+        .bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .linear-bar {
+            background-color: #94a3b8;
+        }
+
+        .bm25-bar {
+            background-color: var(--accent-color);
+        }
+
+        .bar-value {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            min-width: 48px;
+        }
+
+        .widget-insight {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: var(--text-main);
+            background-color: var(--accent-light);
+            padding: 0.85rem 1rem;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .widget-metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-card {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .highlight-metric {
+            background-color: var(--accent-light);
+            border-color: #bfdbfe;
+        }
+
+        .highlight-metric .metric-value {
+            color: var(--accent-color);
+        }
+
+        .metric-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
+            margin-bottom: 0.4rem;
+        }
+
+        .metric-value {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--text-heading);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-footer {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .vocabulary-selector {
+            margin-bottom: 1.5rem;
+        }
+
+        .selector-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .term-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .term-chip {
+            background-color: #f1f5f9;
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 0.4rem 0.85rem;
+            border-radius: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .term-chip:hover {
+            background-color: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .term-chip.active {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        .vector-display-panel {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .vector-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .vector-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-heading);
+        }
+
+        .sparse-array {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            font-family: var(--font-mono);
+        }
+
+        .array-cell {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 64px;
+        }
+
+        .array-cell.has-weight {
+            background-color: var(--accent-light);
+            border-color: #bfdbfe;
+        }
+
+        .cell-dim {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .cell-val {
+            font-weight: 700;
+            color: var(--text-heading);
+        }
+
+        .array-cell.has-weight .cell-val {
+            color: var(--accent-color);
+        }
+
+        .document-scoring-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .doc-score-item {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            background-color: #ffffff;
+            transition: border-color 0.2s ease;
+        }
+
+        .doc-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .doc-id {
+            font-weight: 600;
+            color: var(--text-heading);
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .doc-rank-badge {
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .rank-1 {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .rank-2 {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+        }
+
+        .dot-product-breakdown {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed var(--border-color);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .breakdown-label {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .breakdown-formula {
+            background-color: #f8fafc;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            color: var(--text-heading);
+            font-weight: 600;
+        }
+
+        .final-score {
+            font-size: 0.95rem;
+            color: var(--text-heading);
+        }
+
+        .final-score strong {
+            color: var(--accent-color);
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+        }
+    </style>
+
+    <!-- MathJax for LaTeX Rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['\\(', '\\)']],
+                displayMath: [['$$', '$$']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <main class="article-content">
+            <header class="article-header">
+                <h1 class="article-title">BM25 Search & Sparse Vectors: Step-by-Step Mechanics</h1>
+            </header>
+
+            <nav class="table-of-contents">
+                <details class="toc-details" open>
+                    <summary class="toc-summary">
+                        <h3>Table of Contents</h3>
+                        <span class="toc-toggle-icon">▼</span>
+                    </summary>
+                    <div class="toc-content">
+                        <ul>
+                            <li>
+                                <a href="#core-concept">Core Concept: Dense Keywords to Sparse Vectors</a>
+                                <ul>
+                                    <li><a href="#limits-tfidf">The Limits of Pure TF-IDF</a></li>
+                                    <li><a href="#sparse-vectors-defined">Sparse Vectors Defined</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#internal-mechanics">Internal Mechanics of BM25</a>
+                                <ul>
+                                    <li><a href="#tf-saturation">Term Frequency Saturation (k₁)</a></li>
+                                    <li><a href="#idf-scaling">Inverse Document Frequency (IDF) Scaling</a></li>
+                                    <li><a href="#length-normalization">Document Length Normalization (b)</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#scoring-architecture">End-to-End Sparse Scoring Architecture</a>
+                                <ul>
+                                    <li><a href="#vector-construction">Constructing the Sparse Vector Space</a></li>
+                                    <li><a href="#sparse-dot-product">Query Scoring via Sparse Dot Product</a></li>
+                                    <li><a href="#code-implementation">Production Code Implementation</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#tradeoffs-evolutions">Tradeoffs, Edge Cases, and Neural Evolutions</a>
+                                <ul>
+                                    <li><a href="#vocabulary-mismatch">Exact Lexical Matching vs. Vocabulary
+                                            Mismatch</a></li>
+                                    <li><a href="#splade-neural-sparse">SPLADE: Neural Sparse Vector Expansions</a></li>
+                                    <li><a href="#infrastructure-considerations">Production Infrastructure
+                                            Considerations</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+            </nav>
+
+            <section id="core-concept">
+                <h2>Core Concept: Dense Keywords to Sparse Vectors</h2>
+                <p>
+                    Modern information retrieval leverages two distinct paradigms for matching search queries against
+                    large document corpora: dense vector search and sparse vector search. While dense embeddings map
+                    semantic concepts into highly compressed continuous spaces, sparse vector retrieval provides exact
+                    lexical matching and extreme interpretability by operating directly over discrete vocabulary
+                    dimensions. <strong>BM25 (Best Matching 25)</strong> represents the state-of-the-art algorithmic
+                    foundation for sparse vector retrieval systems.
+                </p>
+
+                <h3 id="limits-tfidf">The Limits of Pure TF-IDF</h3>
+                <p>
+                    To understand BM25, one must first evaluate its direct predecessor: <strong>TF-IDF</strong> (Term
+                    Frequency-Inverse Document Frequency). TF-IDF calculates relevance by multiplying the raw occurrence
+                    count of a keyword within a document by the general rarity of that keyword across the entire
+                    collection.
+                </p>
+                <p>
+                    TF-IDF exhibits two critical structural vulnerabilities in production environments. First, its
+                    relevance score scales linearly with raw term frequency. If a document repeats a target keyword
+                    fifty times, TF-IDF awards it a disproportionately massive score, rendering systems susceptible to
+                    keyword stuffing. Second, TF-IDF applies zero mathematical penalties for document length. Long
+                    documents naturally contain more absolute words and accumulate higher match probabilities across
+                    diverse queries, frequently outranking highly relevant but concise documents. BM25 directly resolves
+                    these structural defects through bounded term saturation and adaptive length normalization.
+                </p>
+
+                <h3 id="sparse-vectors-defined">Sparse Vectors Defined</h3>
+                <p>
+                    A <strong>sparse vector</strong> is a high-dimensional array where the absolute number of dimensions
+                    corresponds precisely to the total unique vocabulary terms present across the document collection.
+                    Because any single document contains only a minuscule fraction of the global vocabulary, the vast
+                    majority of values within its vector representation are exactly zero.
+                </p>
+
+                <figure>
+                    <svg viewBox="0 0 720 180" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="720" height="180" rx="8" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1" />
+                        <text x="20" y="35" font-family="Outfit, sans-serif" font-size="14" font-weight="700"
+                            fill="#0f172a">Global Vocabulary Space (N Dimensions)</text>
+
+                        <!-- Vocabulary terms -->
+                        <g font-family="Fira Code, monospace" font-size="11" fill="#64748b" text-anchor="middle">
+                            <text x="80" y="70">"algorithm"</text>
+                            <text x="190" y="70">"bm25"</text>
+                            <text x="300" y="70">"database"</text>
+                            <text x="410" y="70">"retrieval"</text>
+                            <text x="520" y="70">"sparse"</text>
+                            <text x="630" y="70">"vector"</text>
+                        </g>
+
+                        <!-- Sparse Vector Boxes -->
+                        <g stroke="#cbd5e1" stroke-width="1">
+                            <!-- Dim 1 -->
+                            <rect x="35" y="85" width="90" height="40" rx="4" fill="#ffffff" />
+                            <text x="80" y="110" font-family="Fira Code, monospace" font-size="13" font-weight="600"
+                                fill="#94a3b8" text-anchor="middle">0.0</text>
+
+                            <!-- Dim 2 -->
+                            <rect x="145" y="85" width="90" height="40" rx="4" fill="#eff6ff" stroke="#2563eb"
+                                stroke-width="2" />
+                            <text x="190" y="110" font-family="Fira Code, monospace" font-size="13" font-weight="700"
+                                fill="#2563eb" text-anchor="middle">3.42</text>
+
+                            <!-- Dim 3 -->
+                            <rect x="255" y="85" width="90" height="40" rx="4" fill="#ffffff" />
+                            <text x="300" y="110" font-family="Fira Code, monospace" font-size="13" font-weight="600"
+                                fill="#94a3b8" text-anchor="middle">0.0</text>
+
+                            <!-- Dim 4 -->
+                            <rect x="365" y="85" width="90" height="40" rx="4" fill="#ffffff" />
+                            <text x="410" y="110" font-family="Fira Code, monospace" font-size="13" font-weight="600"
+                                fill="#94a3b8" text-anchor="middle">0.0</text>
+
+                            <!-- Dim 5 -->
+                            <rect x="475" y="85" width="90" height="40" rx="4" fill="#eff6ff" stroke="#2563eb"
+                                stroke-width="2" />
+                            <text x="520" y="110" font-family="Fira Code, monospace" font-size="13" font-weight="700"
+                                fill="#2563eb" text-anchor="middle">1.85</text>
+
+                            <!-- Dim 6 -->
+                            <rect x="585" y="85" width="90" height="40" rx="4" fill="#eff6ff" stroke="#2563eb"
+                                stroke-width="2" />
+                            <text x="630" y="110" font-family="Fira Code, monospace" font-size="13" font-weight="700"
+                                fill="#2563eb" text-anchor="middle">2.10</text>
+                        </g>
+
+                        <text x="20" y="155" font-family="Inter, sans-serif" font-size="12" fill="#64748b">Document
+                            Vector: [0.0, 3.42, 0.0, 0.0, 1.85, 2.10] (Highly Sparse Representation)</text>
+                    </svg>
+                    <figcaption>Figure 1: Mapping document contents into a discrete sparse vector space. Non-occurring
+                        vocabulary terms map to zero, while matching terms store computed BM25 scalar weights.
+                    </figcaption>
+                </figure>
+
+                <p>
+                    Rather than storing full zero-filled matrices in memory, search engines index sparse vectors
+                    efficiently using compressed key-value mappings consisting of explicit term identifiers and their
+                    corresponding non-zero BM25 floating-point weights.
+                </p>
+            </section>
+
+            <section id="internal-mechanics">
+                <h2>Internal Mechanics of BM25</h2>
+                <p>
+                    The BM25 scoring algorithm calculates the absolute relevance score between a query vector and a
+                    target document vector by summing the independent contributions of each matching term. The core
+                    formula operates as follows:
+                </p>
+
+                <div class="callout">
+                    <p>
+                        <strong>The Core BM25 Formula:</strong>
+                    </p>
+                    $$\text{Score}(D, Q) = \sum_{q_i \in Q} \text{IDF}(q_i) \cdot \frac{f(q_i, D) \cdot (k_1 +
+                    1)}{f(q_i, D) + k_1 \cdot \left(1 - b + b \cdot \frac{|D|}{\text{avgdl}}\right)}$$
+                </div>
+
+                <p>
+                    Every parameter within this mathematical formulation targets a specific operational optimization
+                    designed to align statistical term occurrences with real human perception of document relevance.
+                </p>
+
+                <h3 id="tf-saturation">Term Frequency Saturation (\(k_1\))</h3>
+                <p>
+                    The variable \(f(q_i, D)\) represents the raw term frequency: the number of times query term
+                    \(q_i\) appears inside document \(D\). To prevent keyword repetition from
+                    dominating the ranking hierarchy, BM25 introduces a non-linear saturation parameter known as
+                    <strong>\(k_1\)</strong>.
+                </p>
+                <p>
+                    Typically calibrated between <code>1.2</code> and <code>2.0</code>, the \(k_1\) coefficient
+                    establishes an asymptotic upper bound on term frequency contribution. As a term appears repeatedly,
+                    its marginal score addition decreases rapidly, approaching a strict mathematical ceiling. This
+                    guarantees that the first few occurrences of a search keyword provide high retrieval signal, while
+                    subsequent duplications yield negligible scoring impact.
+                </p>
+
+                <!-- Interactive Widget 1: TF Saturation Simulator -->
+                <div class="widget-container" id="widget-tf-saturation">
+                    <div class="widget-header">
+                        <h4>Interactive Simulation: Term Frequency Saturation (\(k_1\)) vs Linear TF</h4>
+                        <p class="widget-subtitle">Observe how adjusting \(k_1\) bounds the scoring contribution of
+                            keyword
+                            repetitions.</p>
+                    </div>
+                    <div class="widget-body">
+                        <div class="widget-controls">
+                            <div class="control-group">
+                                <label for="tf-input">Raw Term Frequency \(f(q_i, D)\): <span id="tf-val-display"
+                                        class="badge">5</span></label>
+                                <input type="range" id="tf-input" min="1" max="25" step="1" value="5" />
+                                <span class="range-labels"><span>1</span><span>25</span></span>
+                            </div>
+                            <div class="control-group">
+                                <label for="k1-input">Saturation Coefficient (\(k_1\)): <span id="k1-val-display"
+                                        class="badge">1.5</span></label>
+                                <input type="range" id="k1-input" min="0.5" max="3.0" step="0.1" value="1.5" />
+                                <span class="range-labels"><span>0.5 (Aggressive Bounds)</span><span>3.0 (Higher
+                                        Ceiling)</span></span>
+                            </div>
+                        </div>
+                        <div class="widget-visualization">
+                            <div class="chart-container">
+                                <div class="bar-group">
+                                    <div class="bar-label">Pure Linear TF Score</div>
+                                    <div class="bar-wrapper">
+                                        <div class="bar linear-bar" id="bar-linear" style="width: 20%;"></div>
+                                        <span class="bar-value" id="val-linear">5.00</span>
+                                    </div>
+                                </div>
+                                <div class="bar-group">
+                                    <div class="bar-label">BM25 Saturated TF Component</div>
+                                    <div class="bar-wrapper">
+                                        <div class="bar bm25-bar" id="bar-bm25" style="width: 65%;"></div>
+                                        <span class="bar-value" id="val-bm25">1.92</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="widget-insight">
+                                <strong>Mechanic Insight:</strong> While the linear score scales unboundedly to <span
+                                    id="insight-linear">5.00</span>, the BM25 contribution is tightly capped,
+                                approaching a strict theoretical maximum limit of <strong><span
+                                        id="insight-max">2.50</span></strong>.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 id="idf-scaling">Inverse Document Frequency (IDF) Scaling</h3>
+                <p>
+                    The <strong>IDF</strong> component serves as a global weighting mechanism that prioritizes highly
+                    specific vocabulary terms over pervasive stopwords. BM25 computes standard probabilistic IDF using
+                    the total document count within the corpus (\(N\)) alongside the document frequency
+                    (\(n(q_i)\)), which represents the subset of documents containing the keyword at least once.
+                </p>
+                $$\text{IDF}(q_i) = \ln \left( \frac{N - n(q_i) + 0.5}{n(q_i) + 0.5} + 1.0 \right)$$
+                <p>
+                    Terms that appear across almost every document in a collection yield an IDF value approaching zero,
+                    dampening their overall search impact. Conversely, highly localized technical terms receive elevated
+                    IDF multipliers, ensuring that queries containing unique compound identifiers focus scoring
+                    precision primarily on those distinctive tokens.
+                </p>
+
+                <h3 id="length-normalization">Document Length Normalization (\(b\))</h3>
+                <p>
+                    Documents naturally vary in length. A five-hundred-word article containing three references to a
+                    specific database engine exhibits a much denser topical concentration than a fifty-thousand-word
+                    manual containing the same three references. BM25 equalizes this variance through document length
+                    normalization governed by the hyperparameter <strong>\(b\)</strong>.
+                </p>
+                <p>
+                    The \(b\) parameter ranges continuously from \(0.0\) to \(1.0\). If
+                    \(b = 0.0\), length normalization is completely disabled. If \(b = 1.0\), full
+                    normalization applies, scaling term counts inversely against document lengths. Industry standard
+                    production configurations maintain \(b = 0.75\) to strike an optimized balance.
+                </p>
+
+                <!-- Interactive Widget 2: Length Normalization Penalty Calculator -->
+                <div class="widget-container" id="widget-length-norm">
+                    <div class="widget-header">
+                        <h4>Interactive Simulation: Document Length Penalty Multiplier</h4>
+                        <p class="widget-subtitle">Evaluate how document length (\(|D|\)) relative to average corpus
+                            length
+                            (\(\text{avgdl}\)) dampens or boosts keyword weights.</p>
+                    </div>
+                    <div class="widget-body">
+                        <div class="widget-controls">
+                            <div class="control-group">
+                                <label for="doc-len-input">Target Document Length \(|D|\): <span id="doc-len-display"
+                                        class="badge">1200 words</span></label>
+                                <input type="range" id="doc-len-input" min="100" max="3000" step="50" value="1200" />
+                                <span class="range-labels"><span>100 (Extremely Short)</span><span>3000 (Highly
+                                        Verbose)</span></span>
+                            </div>
+                            <div class="control-group">
+                                <label for="b-input">Normalization Strength (\(b\)): <span id="b-display"
+                                        class="badge">0.75</span></label>
+                                <input type="range" id="b-input" min="0.0" max="1.0" step="0.05" value="0.75" />
+                                <span class="range-labels"><span>0.0 (No Normalization)</span><span>1.0 (Strict
+                                        Scaling)</span></span>
+                            </div>
+                        </div>
+                        <div class="widget-metrics-grid">
+                            <div class="metric-card">
+                                <span class="metric-title">Corpus Average (\(\text{avgdl}\))</span>
+                                <span class="metric-value">600 words</span>
+                                <span class="metric-footer">Fixed global constant</span>
+                            </div>
+                            <div class="metric-card">
+                                <span class="metric-title">Length Ratio (\(\frac{|D|}{\text{avgdl}}\))</span>
+                                <span class="metric-value" id="ratio-display">2.00x</span>
+                                <span class="metric-footer" id="ratio-status">Document is longer than average</span>
+                            </div>
+                            <div class="metric-card highlight-metric">
+                                <span class="metric-title">Effective Scaling Denominator</span>
+                                <span class="metric-value" id="denom-display">1.75</span>
+                                <span class="metric-footer" id="denom-status">Penalizes raw term weights</span>
+                            </div>
+                        </div>
+                        <div class="widget-insight" style="margin-top: 1rem;">
+                            <strong>Mechanic Insight:</strong> Because this document is <span
+                                id="insight-ratio">2.00</span> times the average corpus length, its effective term
+                            frequencies are mathematically throttled by a denominator factor of <span
+                                id="insight-factor">1.75</span>. Concise documents below the average length receive
+                            positive scaling multipliers.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="scoring-architecture">
+                <h2>End-to-End Sparse Scoring Architecture</h2>
+                <p>
+                    Production sparse retrieval engines do not execute the complex division and log calculations of BM25
+                    dynamically at search execution time. Instead, systems leverage pre-computation to pre-calculate
+                    term weights during the background indexing phase, outputting highly optimized sparse vectors ready
+                    for instant linear algebra operations.
+                </p>
+
+                <h3 id="vector-construction">Constructing the Sparse Vector Space</h3>
+                <p>
+                    During the offline indexing pipeline, documents are tokenized and processed against the global
+                    vocabulary. For every unique token identified within a document, the engine calculates its final
+                    saturated, length-normalized BM25 scalar weight. These pre-computed values populate the non-zero
+                    indices of the document's sparse vector representation.
+                </p>
+                <p>
+                    When a client issues a search query, the engine maps the query string into an identical
+                    high-dimensional sparse vector space. Query vectors typically encode simple boolean indicators
+                    (value <code>1.0</code> for present terms) or localized query term frequencies, delegating global
+                    importance directly to the pre-computed document weights.
+                </p>
+
+                <h3 id="sparse-dot-product">Query Scoring via Sparse Dot Product</h3>
+                <p>
+                    With both documents and queries translated into aligned sparse vector structures, calculating final
+                    document search relevance simplifies into a single hardware-accelerated linear algebra operation:
+                    the <strong>sparse dot product</strong>.
+                </p>
+                <p>
+                    The dot product multiplies corresponding vector indices together and sums the total results. Because
+                    any index where either the query vector or the document vector stores a zero results in a zero
+                    product, computation scales strictly with the absolute number of matching terms, yielding
+                    sub-millisecond execution latencies over massive document collections.
+                </p>
+
+                <!-- Interactive Widget 3: Live Sparse Vector Dot Product Scoring Engine -->
+                <div class="widget-container" id="widget-scoring-engine">
+                    <div class="widget-header">
+                        <h4>Interactive Simulation: Sparse Vector Dot Product Scoring Engine</h4>
+                        <p class="widget-subtitle">Click terms to toggle active search keywords and watch the engine
+                            compute exact vector dot products instantly across candidate documents.</p>
+                    </div>
+                    <div class="widget-body">
+                        <div class="vocabulary-selector">
+                            <span class="selector-label">Active Query Terms (Click to toggle):</span>
+                            <div class="term-chips" id="query-term-chips">
+                                <button class="term-chip active" data-term="bm25">bm25</button>
+                                <button class="term-chip active" data-term="vector">vector</button>
+                                <button class="term-chip" data-term="database">database</button>
+                                <button class="term-chip" data-term="sparse">sparse</button>
+                                <button class="term-chip" data-term="search">search</button>
+                            </div>
+                        </div>
+
+                        <div class="vector-display-panel">
+                            <div class="vector-row query-vector-row">
+                                <span class="vector-title">Query Vector Q:</span>
+                                <div class="sparse-array" id="query-array-display">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="document-scoring-list">
+                            <div class="doc-score-item" id="doc-item-1">
+                                <div class="doc-item-header">
+                                    <span class="doc-id">Document A: "Efficient bm25 sparse vector search
+                                        implementations"</span>
+                                    <span class="doc-rank-badge rank-1" id="badge-doc1">Rank #1</span>
+                                </div>
+                                <div class="vector-row">
+                                    <span class="vector-title">Sparse Vector D₁:</span>
+                                    <div class="sparse-array doc-array" id="doc1-array-display">
+                                        <!-- Rendered dynamically -->
+                                    </div>
+                                </div>
+                                <div class="dot-product-breakdown">
+                                    <span class="breakdown-label">Dot Product Calculation:</span>
+                                    <code class="breakdown-formula" id="doc1-formula">...</code>
+                                    <span class="final-score">Score: <strong id="doc1-score-val">0.00</strong></span>
+                                </div>
+                            </div>
+
+                            <div class="doc-score-item" id="doc-item-2">
+                                <div class="doc-item-header">
+                                    <span class="doc-id">Document B: "Relational database indexing and continuous vector
+                                        embeddings"</span>
+                                    <span class="doc-rank-badge rank-2" id="badge-doc2">Rank #2</span>
+                                </div>
+                                <div class="vector-row">
+                                    <span class="vector-title">Sparse Vector D₂:</span>
+                                    <div class="sparse-array doc-array" id="doc2-array-display">
+                                        <!-- Rendered dynamically -->
+                                    </div>
+                                </div>
+                                <div class="dot-product-breakdown">
+                                    <span class="breakdown-label">Dot Product Calculation:</span>
+                                    <code class="breakdown-formula" id="doc2-formula">...</code>
+                                    <span class="final-score">Score: <strong id="doc2-score-val">0.00</strong></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 id="code-implementation">Production Code Implementation</h3>
+                <p>
+                    Engineers implement high-performance sparse retrieval loops using matrix frameworks optimized for
+                    compressed sparse row (CSR) arrays. The following production blueprint demonstrates end-to-end
+                    tokenization, parameter configuration, sparse vector pre-computation, and high-speed dot product
+                    search resolution using Python.
+                </p>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <div class="code-label">sparse_bm25_engine.py</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <pre><code><span class="kw">import</span> numpy <span class="kw">as</span> np
+<span class="kw">from</span> collections <span class="kw">import</span> Counter
+<span class="kw">from</span> typing <span class="kw">import</span> List, Dict, Tuple
+
+<span class="kw">class</span> <span class="fn">SparseBM25Engine</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, k1: <span class="dc">float</span> = <span class="st">1.5</span>, b: <span class="dc">float</span> = <span class="st">0.75</span>):
+        self.k1 = k1
+        self.b = b
+        self.vocab: Dict[<span class="dc">str</span>, <span class="dc">int</span>] = {}
+        self.idf: np.ndarray = np.array([])
+        self.avgdl: <span class="dc">float</span> = <span class="st">0.0</span>
+        self.sparse_vectors: List[Dict[<span class="dc">int</span>, <span class="dc">float</span>]] = []
+
+    <span class="kw">def</span> <span class="fn">fit</span>(self, corpus: List[List[<span class="dc">str</span>]]) -> <span class="kw">None</span>:
+        <span class="cm"># 1. Map global vocabulary space</span>
+        unique_tokens = <span class="dc">set</span>(token <span class="kw">for</span> doc <span class="kw">in</span> corpus <span class="kw">for</span> token <span class="kw">in</span> doc)
+        self.vocab = {token: idx <span class="kw">for</span> idx, token <span class="kw">in</span> <span class="fn">enumerate</span>(unique_tokens)}
+        vocab_size = <span class="fn">len</span>(self.vocab)
+        
+        <span class="cm"># 2. Compute corpus document lengths and global average</span>
+        doc_lengths = np.array([<span class="fn">len</span>(doc) <span class="kw">for</span> doc <span class="kw">in</span> corpus])
+        self.avgdl = <span class="fn">float</span>(np.mean(doc_lengths))
+        N = <span class="fn">len</span>(corpus)
+
+        <span class="cm"># 3. Compute exact probabilistic IDF vector</span>
+        doc_freqs = np.zeros(vocab_size, dtype=np.float64)
+        <span class="kw">for</span> doc <span class="kw">in</span> corpus:
+            present_tokens = <span class="dc">set</span>(doc)
+            <span class="kw">for</span> token <span class="kw">in</span> present_tokens:
+                doc_freqs[self.vocab[token]] += <span class="st">1.0</span>
+                
+        <span class="cm"># Apply standard BM25 smoothing to ensure absolute positive scaling</span>
+        self.idf = np.log(((N - doc_freqs + <span class="st">0.5</span>) / (doc_freqs + <span class="st">0.5</span>)) + <span class="st">1.0</span>)
+
+        <span class="cm"># 4. Pre-compute and compress document sparse vectors</span>
+        <span class="kw">for</span> doc <span class="kw">in</span> corpus:
+            term_counts = Counter(doc)
+            doc_len = <span class="fn">len</span>(doc)
+            sparse_vec: Dict[<span class="dc">int</span>, <span class="dc">float</span>] = {}
+            
+            <span class="cm"># Pre-calculate adaptive length normalization denominator multiplier</span>
+            length_penalty = <span class="st">1.0</span> - self.b + self.b * (doc_len / self.avgdl)
+            
+            <span class="kw">for</span> token, count <span class="kw">in</span> term_counts.items():
+                idx = self.vocab[token]
+                tf = <span class="fn">float</span>(count)
+                <span class="cm"># Saturated term frequency numerator scaling</span>
+                numerator = tf * (self.k1 + <span class="st">1.0</span>)
+                denominator = tf + self.k1 * length_penalty
+                weight = self.idf[idx] * (numerator / denominator)
+                sparse_vec[idx] = weight
+                
+            self.sparse_vectors.append(sparse_vec)
+
+    <span class="kw">def</span> <span class="fn">search</span>(self, query: List[<span class="dc">str</span>], top_k: <span class="dc">int</span> = <span class="st">5</span>) -> List[Tuple[<span class="dc">int</span>, <span class="dc">float</span>]]:
+        <span class="cm"># Construct highly sparse query input representation directly inside vocabulary bounds</span>
+        query_vector: Dict[<span class="dc">int</span>, <span class="dc">float</span>] = {}
+        <span class="kw">for</span> token <span class="kw">in</span> query:
+            <span class="kw">if</span> token <span class="kw">in</span> self.vocab:
+                query_vector[self.vocab[token]] = <span class="st">1.0</span>
+
+        <span class="cm"># Execute rapid in-memory sparse dot product scalar accumulation across corpus candidates</span>
+        scores = np.zeros(<span class="fn">len</span>(self.sparse_vectors), dtype=np.float64)
+        <span class="kw">for</span> doc_id, doc_sparse_vec <span class="kw">in</span> <span class="fn">enumerate</span>(self.sparse_vectors):
+            dot_product = <span class="st">0.0</span>
+            <span class="kw">for</span> idx, q_weight <span class="kw">in</span> query_vector.items():
+                <span class="kw">if</span> idx <span class="kw">in</span> doc_sparse_vec:
+                    dot_product += q_weight * doc_sparse_vec[idx]
+            scores[doc_id] = dot_product
+
+        <span class="cm"># Resolve top-k ranked indices efficiently</span>
+        top_indices = np.argsort(scores)[::-<span class="st">1</span>][:top_k]
+        <span class="kw">return</span> [(<span class="fn">int</span>(idx), <span class="fn">float</span>(scores[idx])) <span class="kw">for</span> idx <span class="kw">in</span> top_indices <span class="kw">if</span> scores[idx] > <span class="st">0.0</span>]
+</code></pre>
+                </div>
+            </section>
+
+            <section id="tradeoffs-evolutions">
+                <h2>Tradeoffs, Edge Cases, and Neural Evolutions</h2>
+                <p>
+                    While BM25 delivers exceptionally robust baseline metrics across varied textual domains, relying
+                    exclusively on lexical keyword occurrence exhibits strict boundaries when processing natural human
+                    dialogue or highly heterogeneous enterprise document databases.
+                </p>
+
+                <h3 id="vocabulary-mismatch">Exact Lexical Matching vs. Vocabulary Mismatch</h3>
+                <p>
+                    The fundamental architectural boundary of any sparse retrieval strategy is the <strong>vocabulary
+                        mismatch problem</strong>. If a user queries the term <code>"automobile"</code>, a document
+                    containing rich paragraphs detailing high-performance <code>"cars"</code> yields an intersection
+                    score of precisely zero inside the BM25 vector space. Because sparse vectors require absolute exact
+                    string alignment across discrete vocabulary indices, systems lack internal capabilities to deduce
+                    underlying semantic synonyms.
+                </p>
+
+                <figure>
+                    <svg viewBox="0 0 720 220" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="720" height="220" rx="8" fill="#ffffff" stroke="#e2e8f0" stroke-width="1" />
+
+                        <!-- Traditional BM25 Flow -->
+                        <g transform="translate(20, 20)">
+                            <text x="0" y="15" font-family="Outfit, sans-serif" font-size="14" font-weight="700"
+                                fill="#0f172a">Traditional BM25 Sparse Vector</text>
+                            <rect x="0" y="30" width="320" height="60" rx="6" fill="#f8fafc" stroke="#cbd5e1" />
+                            <text x="15" y="55" font-family="Fira Code, monospace" font-size="12" fill="#1e293b">Query:
+                                "automobile"</text>
+                            <text x="15" y="75" font-family="Inter, sans-serif" font-size="11" fill="#ef4444">Result: 0
+                                Matches for document containing "car"</text>
+                            <path d="M 335 60 L 375 60" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4" />
+                        </g>
+
+                        <!-- Neural SPLADE Flow -->
+                        <g transform="translate(20, 120)">
+                            <text x="0" y="15" font-family="Outfit, sans-serif" font-size="14" font-weight="700"
+                                fill="#2563eb">SPLADE Neural Expanded Sparse Vector</text>
+                            <rect x="0" y="30" width="680" height="60" rx="6" fill="#eff6ff" stroke="#bfdbfe" />
+                            <text x="15" y="55" font-family="Fira Code, monospace" font-size="12" fill="#1d4ed8">Input
+                                Document: "The electric car accelerates rapidly"</text>
+
+                            <!-- Expanded output vectors -->
+                            <g font-family="Fira Code, monospace" font-size="11" fill="#0f172a">
+                                <rect x="360" y="40" width="95" height="25" rx="4" fill="#ffffff" stroke="#3b82f6" />
+                                <text x="365" y="57">car: 4.12</text>
+
+                                <rect x="465" y="40" width="115" height="25" rx="4" fill="#dbeafe" stroke="#2563eb" />
+                                <text x="470" y="57" fill="#1d4ed8">vehicle: 2.85</text>
+
+                                <rect x="590" y="40" width="80" height="25" rx="4" fill="#dbeafe" stroke="#2563eb" />
+                                <text x="595" y="57" fill="#1d4ed8">auto: 1.95</text>
+                            </g>
+                            <text x="15" y="75" font-family="Inter, sans-serif" font-size="11" fill="#2563eb">Result:
+                                Deep transformer projects non-occurring contextual synonyms directly into active
+                                vocabulary dimensions.</text>
+                        </g>
+                    </svg>
+                    <figcaption>Figure 2: Contrasting static exact string matching against active neural expansion
+                        architectures. SPLADE maps semantic intent directly into adjacent sparse vector dimensions.
+                    </figcaption>
+                </figure>
+
+                <h3 id="splade-neural-sparse">SPLADE: Neural Sparse Vector Expansions</h3>
+                <p>
+                    To resolve vocabulary mismatch while retaining the raw computational efficiency and strict index
+                    compatibility of sparse arrays, the industry developed deep neural extensions such as
+                    <strong>SPLADE</strong> (Sparse Lexical and Expansion Model).
+                </p>
+                <p>
+                    SPLADE processes source documents through deep Transformer networks (such as contextualized BERT
+                    variants) coupled with a specialized logarithmic output projection layer mapped precisely across the
+                    core lexical vocabulary space. Rather than emitting dense floating-point arrays, SPLADE outputs
+                    standard sparse vectors that actively inject relevant contextual expansion terms directly into the
+                    non-zero feature set. A document discussing <code>"cars"</code> automatically accumulates positive
+                    sparse scalar weights on adjacent vocabulary dimensions corresponding to <code>"vehicle"</code>,
+                    <code>"driver"</code>, and <code>"automobile"</code> during offline execution. Consequently,
+                    standard inverted indexing systems resolve complex semantic search queries seamlessly using
+                    conventional sparse dot product accumulation loops.
+                </p>
+
+                <h3 id="infrastructure-considerations">Production Infrastructure Considerations</h3>
+                <p>
+                    Deploying optimized sparse vector retrieval architectures demands targeted systems engineering to
+                    maximize index performance and limit real-time memory bloat:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Index Pruning Controls:</strong> Deep neural sparse expansion models like SPLADE
+                        generate significantly denser vector structures than standard statistical BM25 loops.
+                        Implementing strict scalar thresholding (pruning weights below minimal values like
+                        <code>0.15</code>) prevents inverted index posting lists from degrading search execution speeds.
+                    </li>
+                    <li>
+                        <strong>Hybrid Search Pipelines:</strong> Production systems frequently execute parallel
+                        retrieval streams combining bounded BM25 lexical sparse vectors with deep dense semantic
+                        vectors. Using post-retrieval reranking algorithms like <strong>Reciprocal Rank Fusion
+                            (RRF)</strong> combines exact keyword precision seamlessly with broad conceptual recall.
+                    </li>
+                    <li>
+                        <strong>Hardware Layer Integration:</strong> Dedicated vector storage platforms provide
+                        specialized inverted index acceleration paths customized for high-throughput compressed sparse
+                        arrays. Bounding vocabulary dimensions statically during data preparation ensures optimal memory
+                        caching and uniform query processing latencies.
+                    </li>
+                </ul>
+            </section>
+        </main>
+    </div>
+    <script>
+        /* Inlined from ./script.js */
+        // Clean Minimalist Standalone Article Base JavaScript
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCodeCopyButtons();
+        });
+
+        // Also run immediately in case the script is loaded after DOMContentLoaded
+        initCodeCopyButtons();
+
+        function initCodeCopyButtons() {
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                // Prevent binding multiple times if called twice
+                if (btn.dataset.copyInitialized) return;
+                btn.dataset.copyInitialized = "true";
+
+                btn.addEventListener('click', () => {
+                    const codeContainer = btn.closest('.code-container');
+                    if (!codeContainer) return;
+
+                    const codeBlock = codeContainer.querySelector('pre code') || codeContainer.querySelector('pre');
+                    if (codeBlock) {
+                        navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                            const originalText = btn.textContent;
+                            btn.textContent = 'Copied!';
+                            btn.style.color = '#34d399';
+                            btn.style.borderColor = '#34d399';
+                            setTimeout(() => {
+                                btn.textContent = originalText;
+                                btn.style.color = '';
+                                btn.style.borderColor = '';
+                            }, 2000);
+                        }).catch(err => console.error('Copy failed', err));
+                    }
+                });
+            });
+        }
+
+        // --- Interactive Article Component Controllers ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTfSaturationWidget();
+            initLengthNormalizationWidget();
+            initSparseScoringEngineWidget();
+        });
+
+        // 1. Term Frequency Saturation (k1) Simulator
+        function initTfSaturationWidget() {
+            const tfInput = document.getElementById('tf-input');
+            const k1Input = document.getElementById('k1-input');
+            if (!tfInput || !k1Input) return;
+
+            const state = {
+                tf: parseFloat(tfInput.value),
+                k1: parseFloat(k1Input.value)
+            };
+
+            function render() {
+                // Update display text
+                document.getElementById('tf-val-display').textContent = state.tf;
+                document.getElementById('k1-val-display').textContent = state.k1.toFixed(1);
+
+                // Calculations
+                const linearScore = state.tf * 1.0;
+                // Simplified BM25 TF component where length penalty = 1.0
+                const bm25Score = (state.tf * (state.k1 + 1.0)) / (state.tf + state.k1);
+                const maxCeiling = state.k1 + 1.0;
+
+                // Render metrics
+                document.getElementById('val-linear').textContent = linearScore.toFixed(2);
+                document.getElementById('val-bm25').textContent = bm25Score.toFixed(2);
+
+                // Update bar widths visually
+                const linearWidth = Math.min(100, (linearScore / 25.0) * 100);
+                const bm25Width = (bm25Score / 4.0) * 100; // max possible ceiling is 4.0 when k1=3.0
+
+                document.getElementById('bar-linear').style.width = `${linearWidth}%`;
+                document.getElementById('bar-bm25').style.width = `${bm25Width}%`;
+
+                // Update narrative insights
+                document.getElementById('insight-linear').textContent = linearScore.toFixed(2);
+                document.getElementById('insight-max').textContent = maxCeiling.toFixed(2);
+            }
+
+            tfInput.addEventListener('input', (e) => {
+                state.tf = parseFloat(e.target.value);
+                render();
+            });
+
+            k1Input.addEventListener('input', (e) => {
+                state.k1 = parseFloat(e.target.value);
+                render();
+            });
+
+            // Initial render
+            render();
+        }
+
+        // 2. Document Length Normalization (b) Calculator
+        function initLengthNormalizationWidget() {
+            const docLenInput = document.getElementById('doc-len-input');
+            const bInput = document.getElementById('b-input');
+            if (!docLenInput || !bInput) return;
+
+            const state = {
+                docLen: parseFloat(docLenInput.value),
+                b: parseFloat(bInput.value),
+                avgdl: 600.0
+            };
+
+            function render() {
+                document.getElementById('doc-len-display').textContent = `${state.docLen} words`;
+                document.getElementById('b-display').textContent = state.b.toFixed(2);
+
+                const ratio = state.docLen / state.avgdl;
+                const penalty = 1.0 - state.b + state.b * ratio;
+
+                document.getElementById('ratio-display').textContent = `${ratio.toFixed(2)}x`;
+                const ratioStatus = document.getElementById('ratio-status');
+                if (ratio > 1.05) {
+                    ratioStatus.textContent = "Document is longer than average";
+                } else if (ratio < 0.95) {
+                    ratioStatus.textContent = "Document is concise (boosted)";
+                } else {
+                    ratioStatus.textContent = "Corpus baseline length";
+                }
+
+                document.getElementById('denom-display').textContent = penalty.toFixed(2);
+                const denomStatus = document.getElementById('denom-status');
+                const metricCard = document.querySelector('.highlight-metric');
+
+                if (penalty > 1.05) {
+                    denomStatus.textContent = "Penalizes raw term weights";
+                    if (metricCard) {
+                        metricCard.style.borderColor = '#bfdbfe';
+                        metricCard.style.backgroundColor = 'var(--accent-light)';
+                    }
+                } else if (penalty < 0.95) {
+                    denomStatus.textContent = "Boosts raw term weights";
+                    if (metricCard) {
+                        metricCard.style.borderColor = '#bbf7d0';
+                        metricCard.style.backgroundColor = '#dcfce7';
+                    }
+                } else {
+                    denomStatus.textContent = "Neutral scaling factor";
+                    if (metricCard) {
+                        metricCard.style.borderColor = 'var(--border-color)';
+                        metricCard.style.backgroundColor = '#f8fafc';
+                    }
+                }
+
+                document.getElementById('insight-ratio').textContent = ratio.toFixed(2);
+                document.getElementById('insight-factor').textContent = penalty.toFixed(2);
+            }
+
+            docLenInput.addEventListener('input', (e) => {
+                state.docLen = parseFloat(e.target.value);
+                render();
+            });
+
+            bInput.addEventListener('input', (e) => {
+                state.b = parseFloat(e.target.value);
+                render();
+            });
+
+            render();
+        }
+
+        // 3. Live Sparse Vector Dot Product Engine
+        function initSparseScoringEngineWidget() {
+            const vocab = ["bm25", "vector", "database", "sparse", "search"];
+
+            // Underlying sparse index weights precomputed
+            const doc1Weights = { "bm25": 3.42, "vector": 2.10, "sparse": 1.85 };
+            const doc2Weights = { "database": 4.15, "vector": 1.95 };
+
+            const state = {
+                activeQueryTerms: new Set(["bm25", "vector"])
+            };
+
+            const chipsContainer = document.getElementById('query-term-chips');
+            if (!chipsContainer) return;
+
+            function renderArray(containerId, isQuery, docWeights) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.innerHTML = '';
+
+                vocab.forEach(term => {
+                    const cell = document.createElement('div');
+                    cell.className = 'array-cell';
+
+                    let valStr = "0.0";
+                    let hasWeight = false;
+
+                    if (isQuery) {
+                        if (state.activeQueryTerms.has(term)) {
+                            valStr = "1.0";
+                            hasWeight = true;
+                        }
+                    } else {
+                        if (docWeights && docWeights[term] !== undefined) {
+                            valStr = docWeights[term].toFixed(2);
+                            // Highlight if active in query
+                            if (state.activeQueryTerms.has(term)) {
+                                hasWeight = true;
+                            }
+                        }
+                    }
+
+                    if (hasWeight) {
+                        cell.classList.add('has-weight');
+                    }
+
+                    cell.innerHTML = `
+                <span class="cell-dim">"${term}"</span>
+                <span class="cell-val">${valStr}</span>
+            `;
+                    container.appendChild(cell);
+                });
+            }
+
+            function renderScoring() {
+                // Render Query Array
+                renderArray('query-array-display', true, null);
+
+                // Render Doc Arrays
+                renderArray('doc1-array-display', false, doc1Weights);
+                renderArray('doc2-array-display', false, doc2Weights);
+
+                // Compute scores
+                let score1 = 0.0;
+                let formulaParts1 = [];
+                vocab.forEach(term => {
+                    if (state.activeQueryTerms.has(term) && doc1Weights[term] !== undefined) {
+                        const prod = 1.0 * doc1Weights[term];
+                        score1 += prod;
+                        formulaParts1.push(`(1.0 × ${doc1Weights[term].toFixed(2)})`);
+                    }
+                });
+
+                let score2 = 0.0;
+                let formulaParts2 = [];
+                vocab.forEach(term => {
+                    if (state.activeQueryTerms.has(term) && doc2Weights[term] !== undefined) {
+                        const prod = 1.0 * doc2Weights[term];
+                        score2 += prod;
+                        formulaParts2.push(`(1.0 × ${doc2Weights[term].toFixed(2)})`);
+                    }
+                });
+
+                const formulaElem1 = document.getElementById('doc1-formula');
+                const formulaElem2 = document.getElementById('doc2-formula');
+
+                if (formulaElem1) formulaElem1.textContent = formulaParts1.length > 0 ? formulaParts1.join(' + ') : '0.0 (No active term overlap)';
+                if (formulaElem2) formulaElem2.textContent = formulaParts2.length > 0 ? formulaParts2.join(' + ') : '0.0 (No active term overlap)';
+
+                const scoreVal1 = document.getElementById('doc1-score-val');
+                const scoreVal2 = document.getElementById('doc2-score-val');
+                if (scoreVal1) scoreVal1.textContent = score1.toFixed(2);
+                if (scoreVal2) scoreVal2.textContent = score2.toFixed(2);
+
+                // Rank updates
+                const badge1 = document.getElementById('badge-doc1');
+                const badge2 = document.getElementById('badge-doc2');
+                const item1 = document.getElementById('doc-item-1');
+                const item2 = document.getElementById('doc-item-2');
+
+                if (badge1 && badge2 && item1 && item2) {
+                    if (score1 >= score2) {
+                        badge1.className = 'doc-rank-badge rank-1';
+                        badge1.textContent = 'Rank #1';
+                        item1.style.borderColor = '#bbf7d0';
+
+                        badge2.className = 'doc-rank-badge rank-2';
+                        badge2.textContent = 'Rank #2';
+                        item2.style.borderColor = 'var(--border-color)';
+
+                        item1.style.order = "1";
+                        item2.style.order = "2";
+                    } else {
+                        badge2.className = 'doc-rank-badge rank-1';
+                        badge2.textContent = 'Rank #1';
+                        item2.style.borderColor = '#bbf7d0';
+
+                        badge1.className = 'doc-rank-badge rank-2';
+                        badge1.textContent = 'Rank #2';
+                        item1.style.borderColor = 'var(--border-color)';
+
+                        item1.style.order = "2";
+                        item2.style.order = "1";
+                    }
+                }
+            }
+
+            chipsContainer.addEventListener('click', (e) => {
+                const chip = e.target.closest('.term-chip');
+                if (!chip) return;
+
+                const term = chip.dataset.term;
+                if (!term) return;
+
+                if (state.activeQueryTerms.has(term)) {
+                    state.activeQueryTerms.delete(term);
+                    chip.classList.remove('active');
+                } else {
+                    state.activeQueryTerms.add(term);
+                    chip.classList.add('active');
+                }
+
+                renderScoring();
+            });
+
+            // Initialize list layout as flex to enable clean ordering
+            const listContainer = document.querySelector('.document-scoring-list');
+            if (listContainer) {
+                listContainer.style.display = 'flex';
+                listContainer.style.flexDirection = 'column';
+            }
+
+            renderScoring();
+        }
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Core Engineering Concepts Suite</title>
+    <meta name="description"
+        content="Foundational theoretical mechanics and interactive algorithmic walkthroughs powering modern search, retrieval, and systems infrastructure." />
+
+    <!-- Modern Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: "Inter", sans-serif;
+            line-height: 1.6;
+            padding: 4rem 1.5rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .portal-wrapper {
+            max-width: 840px;
+            margin: 0 auto;
+        }
+
+        .portal-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .portal-title {
+            font-family: "Outfit", sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+        }
+
+        .portal-subtitle {
+            font-size: 1.15rem;
+            color: #64748b;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .pillars-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .pillar-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 2rem;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pillar-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #cbd5e1;
+            transition: background-color 0.25s ease;
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        /* Distinct pillar theme bands */
+        .pillar-card[data-theme="bm25"]::before {
+            background-color: #2563eb;
+        }
+
+        .pillar-num {
+            font-family: "Outfit", sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .pillar-title {
+            font-family: "Outfit", sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+            line-height: 1.25;
+            transition: color 0.2s ease;
+        }
+
+        .pillar-card:hover .pillar-title {
+            color: #2563eb;
+        }
+
+        .pillar-card[data-theme="bm25"]:hover .pillar-title {
+            color: #1d4ed8;
+        }
+
+        .pillar-desc {
+            font-size: 0.95rem;
+            color: #64748b;
+            margin-bottom: 1.5rem;
+        }
+
+        .pillar-link-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .pillar-card[data-theme="bm25"] .pillar-link-label {
+            color: #1d4ed8;
+        }
+
+        .pillar-link-label::after {
+            content: '→';
+            transition: transform 0.2s ease;
+        }
+
+        .pillar-card:hover .pillar-link-label::after {
+            transform: translateX(3px);
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="portal-wrapper">
+        <header class="portal-header">
+            <span class="badge">Technical Concepts Suite</span>
+            <h1 class="portal-title">Core Engineering Concepts</h1>
+            <p class="portal-subtitle">Synthesizing algorithmic foundations into interactive visual modules equipped with live client-side mathematical simulations.</p>
+        </header>
+
+        <main class="pillars-grid">
+            <!-- Article 1 -->
+            <a href="./bm25_sparse_vectors.html" class="pillar-card" data-theme="bm25">
+                <div>
+                    <span class="pillar-num">CONCEPT 01</span>
+                    <h2 class="pillar-title">BM25 Search & Sparse Vectors</h2>
+                    <p class="pillar-desc">Master discrete lexical retrieval mechanics via bounded term saturation curves, adaptive document length normalization penalties, high-speed sparse matrix dot products, and deep neural extensions like SPLADE.</p>
+                </div>
+                <span class="pillar-link-label">Access Interactive Guide</span>
+            </a>
+        </main>
+    </div>
+</body>
+
+</html>
