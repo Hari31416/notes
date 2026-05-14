@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mastering Celery: Comprehensive Guide to Distributed Task Queues in Python</title>
+  <meta name="description"
+    content="A complete guide to building resilient, high-performance distributed task queues in Python using Celery, Redis, and RabbitMQ. Includes deep dives into Canvas workflows, monitoring, and production best practices." />
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+    rel="stylesheet" />
+
+  <style>
+    /* Inlined from ./style.css */
+    /* Clean Minimalist Standalone Article Base Stylesheet */
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg-body: #ffffff;
+      --text-main: #1e293b;
+      --text-heading: #0f172a;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      --border-soft: #f1f5f9;
+      --accent-color: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-light: #eff6ff;
+      --code-bg: #0f172a;
+      --code-text: #f8fafc;
+      --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-heading: "Outfit", sans-serif;
+      --font-mono: "Fira Code", monospace;
+    }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.75;
+      font-size: 1.05rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .layout-wrapper {
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 4rem 1.5rem 2rem 1.5rem;
+    }
+
+    .article-content {
+      width: 100%;
+    }
+
+    .article-header {
+      margin-bottom: 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .article-title {
+      font-family: var(--font-heading);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--text-heading);
+      line-height: 1.2;
+    }
+
+    /* Table of Contents */
+    .table-of-contents {
+      background-color: var(--border-soft);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2.5rem;
+      border: 1px solid var(--border-color);
+    }
+
+    .toc-details summary {
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      user-select: none;
+    }
+
+    .toc-details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .toc-details h3 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text-heading);
+    }
+
+    .toc-toggle-icon {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .toc-details[open] .toc-toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .toc-content {
+      margin-top: 1rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid #e2e8f0;
+    }
+
+    .table-of-contents ul {
+      list-style-type: none;
+      padding-left: 0;
+      margin-bottom: 0;
+    }
+
+    .table-of-contents ul ul {
+      padding-left: 1.25rem;
+      margin-top: 0.25rem;
+      margin-bottom: 0.25rem;
+      border-left: 1px solid #cbd5e1;
+    }
+
+    .table-of-contents li {
+      margin-bottom: 0.4rem;
+      line-height: 1.4;
+    }
+
+    .table-of-contents a {
+      color: var(--accent-color);
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    .table-of-contents ul ul a {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .table-of-contents a:hover {
+      text-decoration: underline;
+      color: var(--accent-hover);
+    }
+
+    /* Article Body Formatting */
+    h2 {
+      font-family: var(--font-heading);
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-heading);
+      margin: 3rem 0 1.25rem 0;
+      line-height: 1.3;
+    }
+
+    h3 {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin: 2rem 0 1rem 0;
+    }
+
+    p {
+      margin-bottom: 1.5rem;
+    }
+
+    strong {
+      color: var(--text-heading);
+      font-weight: 600;
+    }
+
+    ul,
+    ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    /* Figures & Images */
+    figure {
+      margin: 2.5rem 0;
+    }
+
+    figure img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      display: block;
+    }
+
+    figcaption {
+      margin-top: 0.75rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    /* Callouts */
+    .callout {
+      background-color: var(--accent-light);
+      border-left: 4px solid var(--accent-color);
+      padding: 1.25rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin: 2rem 0;
+      font-size: 0.95rem;
+    }
+
+    .callout p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Code Blocks */
+    .code-container {
+      margin: 2rem 0;
+      border-radius: 8px;
+      overflow: hidden;
+      background-color: var(--code-bg);
+      border: 1px solid var(--border-color);
+    }
+
+    .code-header {
+      background-color: #1e293b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.4rem 1rem;
+      border-bottom: 1px solid #334155;
+    }
+
+    .code-label {
+      color: #94a3b8;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    .copy-btn {
+      background-color: transparent;
+      color: #94a3b8;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      padding: 0.15rem 0.5rem;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .copy-btn:hover {
+      background-color: #334155;
+      color: #f8fafc;
+    }
+
+    pre {
+      padding: 1.25rem 1rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: var(--code-text);
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: 0.875rem;
+      background-color: #f1f5f9;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+      color: #0f172a;
+    }
+
+    pre code {
+      background-color: transparent;
+      padding: 0;
+      color: inherit;
+    }
+
+    /* Keyword Highlights */
+    .kw {
+      color: #c084fc;
+      font-weight: 500;
+    }
+
+    .fn {
+      color: #38bdf8;
+    }
+
+    .st {
+      color: #a5d6ff;
+    }
+
+    .cm {
+      color: #64748b;
+      font-style: italic;
+    }
+
+    .dc {
+      color: #34d399;
+    }
+
+    .pr {
+      color: #f472b6;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2rem 0;
+      font-size: 0.95rem;
+    }
+
+    th,
+    td {
+      padding: 0.75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      font-family: var(--font-heading);
+      font-weight: 600;
+      color: var(--text-heading);
+      background-color: #f8fafc;
+    }
+  </style>
+  <style>
+    /* Article-Specific Fully Functional Interactive Simulator Component Styles */
+    .simulator-widget {
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 2.5rem 0;
+      background-color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .widget-title {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-heading);
+      margin-bottom: 1rem;
+    }
+
+    .controls-bar {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background-color: #ffffff;
+      color: var(--text-main);
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background-color: #f8fafc;
+      border-color: #cbd5e1;
+    }
+
+    .btn-primary {
+      background-color: var(--accent-color);
+      border-color: var(--accent-color);
+      color: #ffffff;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--accent-hover);
+      border-color: var(--accent-hover);
+      color: #ffffff;
+    }
+
+    .panels-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 600px) {
+      .panels-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel-box {
+      background-color: #f8fafc;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.4rem;
+    }
+
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-height: 80px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .queue-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      background-color: #ffffff;
+      padding: 0.35rem 0.6rem;
+      border-radius: 4px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .worker-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 80px;
+      text-align: center;
+    }
+
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+
+    .badge-idle {
+      background-color: #e2e8f0;
+      color: #475569;
+    }
+
+    .badge-active {
+      background-color: #dcfce7;
+      color: #16a34a;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background-color: #e2e8f0;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 0.75rem;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background-color: var(--accent-color);
+      transition: width 0.2s ease;
+    }
+
+    .log-container {
+      margin-top: 1rem;
+      background-color: #0f172a;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      height: 120px;
+      overflow-y: auto;
+      color: #e2e8f0;
+    }
+
+    .log-line {
+      margin-bottom: 0.25rem;
+      line-height: 1.4;
+    }
+
+    .log-time {
+      color: #64748b;
+    }
+
+    .log-produced {
+      color: #38bdf8;
+    }
+
+    .log-active {
+      color: #f59e0b;
+    }
+
+    .log-success {
+      color: #22c55e;
+    }
+
+    .log-chain {
+      color: #c084fc;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Main Centered Layout Wrapper -->
+  <div class="layout-wrapper">
+
+    <!-- Core Article Container -->
+    <main class="article-content">
+
+      <!-- Article Header -->
+      <header class="article-header">
+        <h1 class="article-title">High-Performance Distributed Task Queues with Celery</h1>
+      </header>
+
+      <!-- Table of Contents -->
+      <nav class="table-of-contents">
+        <details class="toc-details" open>
+          <summary class="toc-summary">
+            <h3>Table of Contents</h3>
+            <span class="toc-toggle-icon">▼</span>
+          </summary>
+          <div class="toc-content">
+            <ul>
+              <li><a href="#introduction">What is a Distributed Task Queue?</a></li>
+              <li><a href="#what-is-celery">Introducing Celery</a></li>
+              <li><a href="#core-concepts">Architecture & Core Concepts</a></li>
+              <li><a href="#setup">Setting Up Celery & Brokers</a></li>
+              <li>
+                <a href="#producing-tasks">Producing & Calling Tasks</a>
+                <ul>
+                  <li><a href="#execution-directives">Execution Directives: delay() vs apply_async()</a></li>
+                </ul>
+              </li>
+              <li><a href="#consuming-tasks">Consuming Tasks with Workers</a></li>
+              <li><a href="#interactive-playground">Interactive Simulation Demo</a></li>
+              <li>
+                <a href="#task-lifecycle">Lifecycles, Routing & Limits</a>
+                <ul>
+                  <li><a href="#task-routing">Task Routing & Rate Limiting</a></li>
+                </ul>
+              </li>
+              <li><a href="#error-handling">Robust Error Handling & Retries</a></li>
+              <li>
+                <a href="#canvas-workflows">Celery Canvas: Advanced Orchestration</a>
+                <ul>
+                  <li><a href="#primary-canvas-workflows">Primary Canvas Workflows</a></li>
+                </ul>
+              </li>
+              <li><a href="#celery-beat">Periodic Tasks with Celery Beat</a></li>
+              <li><a href="#monitoring">Observability with Flower</a></li>
+              <li><a href="#testing">Testing Task Queues</a></li>
+              <li><a href="#best-practices">Production Best Practices</a></li>
+            </ul>
+          </div>
+        </details>
+      </nav>
+
+      <!-- Introduction -->
+      <section id="introduction">
+        <h2>What is a Distributed Task Queue?</h2>
+        <p>
+          In modern application architecture, synchronous processing loops can become severe performance bottlenecks.
+          When a web backend performs intensive data crunching, calls external third-party APIs, or generates files
+          during an active HTTP request, the client is forced to wait.
+        </p>
+        <p>
+          A <strong>distributed task queue</strong> solves this decoupling crisis. It provides an asynchronous
+          communication protocol where application components produce independent computational jobs (tasks) and push
+          them onto a queue broker. Separate computational clusters (workers) pull these tasks and execute them
+          concurrently in the background.
+        </p>
+
+        <div class="callout">
+          <p><strong>Design Tip:</strong> Loose coupling enables elastic scaling. Because producers and consumers
+            operate independently, a spike in API traffic allows you to scale worker clusters directly without modifying
+            your front-facing server configuration.</p>
+        </div>
+      </section>
+
+      <!-- Introducing Celery -->
+      <section id="what-is-celery">
+        <h2>Introducing Celery</h2>
+        <p>
+          <strong>Celery</strong> is the undisputed gold standard for distributed task processing in the Python
+          ecosystem. It is a highly optimized, open-source asynchronous task queue/job queue based on distributed
+          message passing. It integrates natively with top-tier Python frameworks like <strong>Django</strong>,
+          <strong>FastAPI</strong>, and <strong>Flask</strong>.
+        </p>
+        <p>Key highlights of Celery include:</p>
+        <ul>
+          <li><strong>Blazing Fast:</strong> A single Celery worker process can execute millions of tasks a minute with
+            sub-millisecond round-trip latency.</li>
+          <li><strong>Protocol Agnostic:</strong> Out-of-the-box integrations with robust production message brokers
+            like <strong>RabbitMQ</strong> and <strong>Redis</strong>.</li>
+          <li><strong>Advanced Workflows:</strong> Comprehensive primitive API (Canvas) allowing design of deep
+            functional pipelines, parallel grouping, fan-out maps, and cascading callbacks.</li>
+          <li><strong>Flexible Concurrency:</strong> Supports multi-processing (prefork), multi-threading, or
+            asynchronous event loops using <strong>gevent</strong> or <strong>eventlet</strong>.</li>
+        </ul>
+      </section>
+
+      <!-- Architecture & Core Concepts -->
+      <section id="core-concepts">
+        <h2>Architecture & Core Concepts</h2>
+        <p>
+          To write efficient task systems, you must understand the critical operational entities within a Celery
+          topology:
+        </p>
+
+        <!-- Figure 1: Architecture Diagram -->
+        <figure>
+          <svg viewBox="0 0 720 280" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg"
+            style="border-radius: 8px; border: 1px solid var(--border-color); background-color: #f8fafc; display: block;">
+            <defs>
+              <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+              </marker>
+              <marker id="arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+              </marker>
+              <marker id="arrow-dashed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#94a3b8" />
+              </marker>
+            </defs>
+            <g font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif">
+              <!-- Producer Box -->
+              <rect x="30" y="80" width="140" height="70" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+              <text x="100" y="112" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">Producer
+                (Client)</text>
+              <text x="100" y="132" font-size="11" font-family="'Fira Code', monospace" fill="#2563eb"
+                text-anchor="middle">task.delay()</text>
+
+              <!-- Connector Producer -> Broker -->
+              <path d="M 170 115 L 262 115" stroke="#2563eb" stroke-width="2" stroke-dasharray="4"
+                marker-end="url(#arrow-blue)" />
+              <text x="216" y="105" font-size="11" font-weight="600" fill="#2563eb" text-anchor="middle">Push
+                Task</text>
+
+              <!-- Broker Box -->
+              <rect x="270" y="50" width="160" height="130" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2" />
+              <text x="350" y="80" font-size="14" font-weight="700" fill="#1e3a8a" text-anchor="middle">Message
+                Broker</text>
+              <text x="350" y="98" font-size="11" font-weight="500" fill="#3b82f6" text-anchor="middle">Redis /
+                RabbitMQ</text>
+              <!-- Mini queue representations -->
+              <rect x="300" y="112" width="100" height="12" rx="3" fill="#ffffff" stroke="#bfdbfe" stroke-width="1" />
+              <rect x="300" y="130" width="100" height="12" rx="3" fill="#ffffff" stroke="#bfdbfe" stroke-width="1" />
+              <rect x="300" y="148" width="100" height="12" rx="3" fill="#ffffff" stroke="#bfdbfe" stroke-width="1" />
+              <!-- Circles in queues to simulate tasks -->
+              <circle cx="310" cy="118" r="3" fill="#3b82f6" />
+              <circle cx="322" cy="118" r="3" fill="#3b82f6" />
+              <circle cx="310" cy="136" r="3" fill="#93c5fd" />
+              <circle cx="310" cy="154" r="3" fill="#3b82f6" />
+
+              <!-- Connectors Broker -> Workers -->
+              <path d="M 430 90 L 522 60" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+              <path d="M 430 140 L 522 170" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)" />
+              <text x="476" y="65" font-size="11" font-weight="500" fill="#64748b" text-anchor="middle">Consume</text>
+
+              <!-- Worker 1 Box -->
+              <rect x="530" y="30" width="150" height="65" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+              <text x="605" y="58" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">Worker Cluster
+                1</text>
+              <text x="605" y="76" font-size="11" fill="#64748b" text-anchor="middle">Concurrent Consumers</text>
+
+              <!-- Worker 2 Box -->
+              <rect x="530" y="135" width="150" height="65" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2" />
+              <text x="605" y="163" font-size="14" font-weight="700" fill="#0f172a" text-anchor="middle">Worker Cluster
+                2</text>
+              <text x="605" y="181" font-size="11" fill="#64748b" text-anchor="middle">Isolated Queue Nodes</text>
+
+              <!-- Result Backend Box -->
+              <rect x="270" y="215" width="160" height="45" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.5" />
+              <text x="350" y="242" font-size="13" font-weight="600" fill="#475569" text-anchor="middle">Result
+                Backend</text>
+
+              <!-- Connectors Workers -> Result Backend -->
+              <path d="M 605 95 L 605 237 L 434 237" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3"
+                fill="none" marker-end="url(#arrow-dashed)" />
+              <path d="M 530 185 L 490 185 L 490 225 L 434 225" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3"
+                fill="none" marker-end="url(#arrow-dashed)" />
+              <text x="540" y="230" font-size="10" fill="#94a3b8">Store state / results</text>
+            </g>
+          </svg>
+          <figcaption>Figure 1: High-level architectural dataflow showing publishers pushing serialized payloads via a
+            message broker to distributed worker clusters.</figcaption>
+        </figure>
+
+        <ul>
+          <li><strong>Producer (Client):</strong> Your application logic (e.g., a FastAPI route handler) that constructs
+            a task payload and issues standard execution calls like <code>delay()</code>.</li>
+          <li><strong>Broker:</strong> The transport queue intermediate. It accepts published messages from producers
+            and safely delivers them to subscribed worker consumers. <strong>RabbitMQ</strong> provides robust AMQP
+            reliability, while <strong>Redis</strong> offers highly optimized in-memory speed.</li>
+          <li><strong>Worker:</strong> An independent server daemon that continuously listens to the specified broker
+            queues, decodes incoming job payloads, and invokes the underlying Python functions.</li>
+          <li><strong>Result Backend:</strong> Optional persistent storage (e.g., Redis, PostgreSQL, Memcached) used to
+            store final state metadata, return values, or unhandled exceptions generated during task completion.</li>
+        </ul>
+      </section>
+
+      <!-- Setting Up Celery -->
+      <section id="setup">
+        <h2>Setting Up Celery & Brokers</h2>
+        <p>
+          Initializing Celery in a modern workspace is straightforward. Begin by installing the framework alongside your
+          preferred message transport drivers using modern package managers:
+        </p>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">Terminal Shell</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="cm"># Using uv package manager</span>
+uv add celery redis
+
+<span class="cm"># Or standard pip installation</span>
+pip install <span class="st">"celery[redis]"</span></code></pre>
+        </div>
+
+        <p>
+          Next, establish your core application entrypoint file, typically named <code>celery_app.py</code>:
+        </p>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">celery_app.py</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="kw">from</span> celery <span class="kw">import</span> Celery
+
+<span class="cm"># Initialize the standalone Celery application client</span>
+app = Celery(
+    <span class="st">'tasks'</span>,
+    broker=<span class="st">'redis://localhost:6379/0'</span>,
+    backend=<span class="st">'redis://localhost:6379/1'</span>
+)
+
+<span class="cm"># Override advanced serialization and runtime settings</span>
+app.conf.update(
+    task_serializer=<span class="st">'json'</span>,
+    accept_content=[<span class="st">'json'</span>],
+    result_serializer=<span class="st">'json'</span>,
+    timezone=<span class="st">'UTC'</span>,
+    enable_utc=<span class="kw">True</span>,
+    task_acks_late=<span class="kw">True</span>,
+)</code></pre>
+        </div>
+      </section>
+
+      <!-- Producing & Calling Tasks -->
+      <section id="producing-tasks">
+        <h2>Producing & Calling Tasks</h2>
+        <p>
+          Transforming a standard Python execution unit into a background task is achieved via the custom
+          <code>@app.task</code> decorator. Once declared, producers push them onto broker pipelines using optimized
+          APIs.
+        </p>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">tasks.py</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="kw">from</span> celery_app <span class="kw">import</span> app
+<span class="kw">import</span> time
+
+<span class="dc">@app.task</span>
+<span class="kw">def</span> <span class="fn">process_video_transcode</span>(video_id: <span class="kw">int</span>, target_format: <span class="kw">str</span>) -> <span class="kw">dict</span>:
+    <span class="cm">"""Simulates CPU intensive multimedia conversion logic."""</span>
+    time.sleep(<span class="pr">2.5</span>)
+    <span class="kw">return</span> {<span class="st">"video_id"</span>: video_id, <span class="st">"status"</span>: <span class="st">"COMPLETED"</span>}</code></pre>
+        </div>
+
+        <h3 id="execution-directives">Execution Directives: delay() vs apply_async()</h3>
+        <p>
+          Producers invoke background jobs through two main driver functions:
+        </p>
+        <ul>
+          <li><code>task.delay(*args, **kwargs)</code>: Highly readable star-argument shortcut designed for
+            instantaneous scheduling.</li>
+          <li><code>task.apply_async(args=[...], kwargs={...}, **options)</code>: The robust full API signature
+            providing deep parameter instrumentation.</li>
+        </ul>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">producer.py</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="cm"># Direct triggering without advanced routing arguments</span>
+job = process_video_transcode.delay(<span class="pr">1024</span>, <span class="st">'mp4'</span>)
+
+<span class="cm"># Advanced scheduling: Executing task after a 10-second wait on a custom queue</span>
+job_custom = process_video_transcode.apply_async(
+    args=[<span class="pr">2048</span>, <span class="st">'webm'</span>],
+    countdown=<span class="pr">10</span>,
+    queue=<span class="st">'media_heavy'</span>,
+    priority=<span class="pr">8</span>
+)</code></pre>
+        </div>
+      </section>
+
+      <!-- Consuming Tasks -->
+      <section id="consuming-tasks">
+        <h2>Consuming Tasks with Workers</h2>
+        <p>
+          To launch consumer processes that process pending queues, initialize terminal worker threads targeted at your
+          application instance:
+        </p>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">Terminal Shell</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="cm"># Launching worker consuming the default queue</span>
+celery -A celery_app worker --loglevel=INFO
+
+<span class="cm"># Dedicated consumer pool mapping concurrency targets to specific queue paths</span>
+celery -A celery_app worker -Q media_heavy --concurrency=4</code></pre>
+        </div>
+      </section>
+
+      <!-- Fully Functional Interactive Component -->
+      <section id="interactive-playground">
+        <h2>Interactive Simulation Demo</h2>
+        <p>
+          Test how message queues decouple execution logic. Click the operational control buttons below to push mock
+          background task payloads onto the queue list. Watch the worker daemon consume items sequentially while
+          outputting real-time execution logs.
+        </p>
+
+        <div class="simulator-widget">
+          <div class="widget-title">Live Broker & Worker Panel</div>
+
+          <div class="controls-bar">
+            <button id="btn-add-task" class="btn btn-primary">Produce Standard Task</button>
+            <button id="btn-add-heavy" class="btn">Produce Heavy Task</button>
+            <button id="btn-add-chain" class="btn">Trigger Canvas Chain</button>
+          </div>
+
+          <div class="panels-grid">
+            <div class="panel-box">
+              <div class="panel-header">
+                <span>Message Broker Queue</span>
+                <span id="queue-count">0 PENDING</span>
+              </div>
+              <div id="queue-container" class="queue-list">
+                <div style="color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 1rem 0;">Queue empty</div>
+              </div>
+            </div>
+
+            <div class="panel-box">
+              <div class="panel-header">
+                <span>Worker Process</span>
+                <span>Concurrency: 1</span>
+              </div>
+              <div class="worker-state">
+                <span id="worker-badge" class="status-badge badge-idle">IDLE</span>
+                <div id="worker-task" style="font-family: var(--font-mono); font-size: 0.85rem; font-weight: 500;">Ready
+                </div>
+                <div class="progress-track">
+                  <div id="worker-progress" class="progress-fill"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="log-console" class="log-container">
+            <div class="log-line"><span class="log-time">[System]</span> Simulator initialized. Ready to process
+              incoming payloads.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Lifecycles, Routing & Limits -->
+      <section id="task-lifecycle">
+        <h2>Lifecycles, Routing & Limits</h2>
+        <p>
+          Every instantiated Celery payload navigates a well-defined state lifecycle engine tracked internally by the
+          core runtime framework.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>State</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>PENDING</code></td>
+              <td>Task created and delivered to transport queue.</td>
+            </tr>
+            <tr>
+              <td><code>STARTED</code></td>
+              <td>Worker thread has actively un-marshaled job payload.</td>
+            </tr>
+            <tr>
+              <td><code>SUCCESS</code></td>
+              <td>Function finished processing cleanly without errors.</td>
+            </tr>
+            <tr>
+              <td><code>FAILURE</code></td>
+              <td>Uncaught exception bubbled up out of handler logic.</td>
+            </tr>
+            <tr>
+              <td><code>RETRY</code></td>
+              <td>Task error trapped with retry request instructions.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3 id="task-routing">Task Routing & Rate Limiting</h3>
+        <p>
+          Explicit task routing guarantees isolated hardware capacity segments, keeping heavy analytics jobs from
+          blocking rapid operational notifications.
+        </p>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">celery_app.py</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="cm"># Route mapping</span>
+app.conf.task_routes = {
+    <span class="st">'tasks.process_video_transcode'</span>: {<span class="st">'queue'</span>: <span class="st">'media_heavy'</span>},
+}
+
+<span class="cm"># Task level rate-limiting parameter controls</span>
+<span class="dc">@app.task</span>(rate_limit=<span class="st">'10/m'</span>)
+<span class="kw">def</span> <span class="fn">call_external_rate_limited_api</span>(payload: <span class="kw">dict</span>):
+    <span class="kw">pass</span></code></pre>
+        </div>
+      </section>
+
+      <!-- Error Handling & Automatic Retries -->
+      <section id="error-handling">
+        <h2>Robust Error Handling & Retries</h2>
+        <p>
+          Distributed environments suffer from transient communication drops. Celery offers comprehensive declarative
+          retry mechanisms directly within job definitions to gracefully survive outages.
+        </p>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">tasks.py</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="kw">import</span> requests
+<span class="kw">from</span> celery.exceptions <span class="kw">import</span> Reject
+
+<span class="dc">@app.task</span>(
+    bind=<span class="kw">True</span>,
+    autoretry_for=(requests.exceptions.RequestException,),
+    retry_kwargs={<span class="st">'max_retries'</span>: <span class="pr">3</span>},
+    retry_backoff=<span class="kw">True</span>,      <span class="cm"># Exponential timing scaling</span>
+    retry_jitter=<span class="kw">True</span>        <span class="cm"># Injects sub-second noise distribution</span>
+)
+<span class="kw">def</span> <span class="fn">sync_inventory_webhook</span>(self, store_id: <span class="kw">str</span>):
+    <span class="kw">try</span>:
+        response = requests.post(<span class="st">f"https://api.store.com/</span>{store_id}<span class="st">"</span>, timeout=<span class="pr">5</span>)
+        response.raise_for_status()
+    <span class="kw">except</span> requests.exceptions.HTTPError <span class="kw">as</span> e:
+        <span class="kw">if</span> e.response.status_code <span class="kw">in</span> (<span class="pr">400</span>, <span class="pr">404</span>):
+            <span class="kw">raise</span> Reject(<span class="st">"Fatal client syntax error."</span>, requeue=<span class="kw">False</span>)
+        <span class="kw">raise</span> e</code></pre>
+        </div>
+      </section>
+
+      <!-- Celery Canvas Workflows -->
+      <section id="canvas-workflows">
+        <h2>Celery Canvas: Advanced Orchestration</h2>
+        <p>
+          Enterprise applications rely on complex computational orchestration. Celery provides core primitive
+          operations—collectively called the <strong>Canvas</strong>—to wire isolated asynchronous operations together
+          into unified workflow graphs.
+        </p>
+
+        <!-- Figure 2: Canvas Workflows Diagram -->
+        <figure>
+          <svg viewBox="0 0 720 320" width="100%" height="auto" xmlns="http://www.w3.org/2000/svg"
+            style="border-radius: 8px; border: 1px solid var(--border-color); background-color: #ffffff; display: block;">
+            <defs>
+              <marker id="canvas-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b" />
+              </marker>
+              <marker id="canvas-arrow-blue" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6"
+                orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb" />
+              </marker>
+            </defs>
+            <g font-family="-apple-system, BlinkMacSystemFont, 'Inter', sans-serif">
+              <!-- Task A Box (Chain Start) -->
+              <rect x="30" y="125" width="140" height="70" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+              <text x="100" y="155" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">Stage 1:
+                Chain</text>
+              <text x="100" y="175" font-size="11" font-family="'Fira Code', monospace" fill="#475569"
+                text-anchor="middle">extract_record.s()</text>
+
+              <!-- Grouping Region Container -->
+              <rect x="240" y="25" width="230" height="270" rx="12" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2"
+                stroke-dasharray="6" />
+              <text x="355" y="48" font-size="12" font-weight="600" fill="#64748b" text-anchor="middle">group() /
+                Parallel Fan-out Map</text>
+
+              <!-- Parallel Worker Nodes inside Group -->
+              <!-- Node 1 -->
+              <rect x="260" y="65" width="190" height="55" rx="6" fill="#ffffff" stroke="#38bdf8" stroke-width="2" />
+              <text x="355" y="92" font-size="12" font-weight="600" fill="#0f172a" text-anchor="middle">Worker Thread
+                1</text>
+              <text x="355" y="110" font-size="10" font-family="'Fira Code', monospace" fill="#0284c7"
+                text-anchor="middle">analyze_chunk.s(0)</text>
+
+              <!-- Node 2 -->
+              <rect x="260" y="135" width="190" height="55" rx="6" fill="#ffffff" stroke="#38bdf8" stroke-width="2" />
+              <text x="355" y="162" font-size="12" font-weight="600" fill="#0f172a" text-anchor="middle">Worker Thread
+                2</text>
+              <text x="355" y="180" font-size="10" font-family="'Fira Code', monospace" fill="#0284c7"
+                text-anchor="middle">analyze_chunk.s(1)</text>
+
+              <!-- Node 3 -->
+              <rect x="260" y="205" width="190" height="55" rx="6" fill="#ffffff" stroke="#38bdf8" stroke-width="2" />
+              <text x="355" y="232" font-size="12" font-weight="600" fill="#0f172a" text-anchor="middle">Worker Thread
+                3</text>
+              <text x="355" y="250" font-size="10" font-family="'Fira Code', monospace" fill="#0284c7"
+                text-anchor="middle">analyze_chunk.s(2)</text>
+
+              <!-- Fan-out Connectors -->
+              <path d="M 170 160 C 205 160 215 92 256 92" stroke="#64748b" stroke-width="2" fill="none"
+                marker-end="url(#canvas-arrow)" />
+              <path d="M 170 160 L 256 160" stroke="#64748b" stroke-width="2" fill="none"
+                marker-end="url(#canvas-arrow)" />
+              <path d="M 170 160 C 205 160 215 232 256 232" stroke="#64748b" stroke-width="2" fill="none"
+                marker-end="url(#canvas-arrow)" />
+              <text x="205" y="145" font-size="10" font-weight="500" fill="#64748b" text-anchor="middle"
+                transform="rotate(-90 205 145)">chain() feed</text>
+
+              <!-- Task C Box (Chord Callback) -->
+              <rect x="540" y="125" width="150" height="70" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2" />
+              <text x="615" y="155" font-size="13" font-weight="700" fill="#1e3a8a" text-anchor="middle">Stage 3:
+                Callback</text>
+              <text x="615" y="175" font-size="10" font-family="'Fira Code', monospace" fill="#2563eb"
+                text-anchor="middle">generate_summary.s()</text>
+
+              <!-- Fan-in Connectors -->
+              <path d="M 450 92 C 495 92 505 150 536 150" stroke="#2563eb" stroke-width="2" fill="none"
+                marker-end="url(#canvas-arrow-blue)" />
+              <path d="M 450 160 L 536 160" stroke="#2563eb" stroke-width="2" fill="none"
+                marker-end="url(#canvas-arrow-blue)" />
+              <path d="M 450 232 C 495 232 505 170 536 170" stroke="#2563eb" stroke-width="2" fill="none"
+                marker-end="url(#canvas-arrow-blue)" />
+              <text x="495" y="120" font-size="11" font-weight="600" fill="#2563eb" text-anchor="middle">chord()
+                sync</text>
+            </g>
+          </svg>
+          <figcaption>Figure 2: Canvas mapping graph showing sequential chains feeding into highly concurrent fan-out
+            maps grouped by chords.</figcaption>
+        </figure>
+
+        <h3 id="primary-canvas-workflows">Primary Canvas Workflows</h3>
+        <ul>
+          <li><strong>Chain:</strong> Executes wrapped signatures sequentially, feeding the output return values of the
+            predecessor task into the next signature as an input parameter argument.</li>
+          <li><strong>Group:</strong> Dispatches an array of signatures in parallel across all available worker cluster
+            groups.</li>
+          <li><strong>Chord:</strong> Executes a Parallel Group array and invokes a target completion callback task when
+            all grouped steps resolve successfully.</li>
+        </ul>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">workflow_canvas.py</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="kw">from</span> celery <span class="kw">import</span> chain, group, chord
+<span class="kw">from</span> tasks <span class="kw">import</span> extract_record, analyze_chunk, generate_summary
+
+<span class="cm"># 1. Sequential Chaining Example</span>
+workflow_chain = chain(
+    extract_record.s(<span class="st">"file.csv"</span>),
+    analyze_chunk.s(mode=<span class="st">"deep"</span>),
+    generate_summary.s()
+)()
+
+<span class="cm"># 2. Parallel Distribution Group</span>
+parallel_jobs = group(
+    analyze_chunk.s(chunk_id=i) <span class="kw">for</span> i <span class="kw">in</span> <span class="kw">range</span>(<span class="pr">5</span>)
+)()
+
+<span class="cm"># 3. Chord Callback Orchestration</span>
+workflow_chord = chord(
+    header=[analyze_chunk.s(chunk_id=i) <span class="kw">for</span> i <span class="kw">in</span> <span class="kw">range</span>(<span class="pr">3</span>)],
+    body=generate_summary.s(title=<span class="st">"Metrics"</span>)
+)()</code></pre>
+        </div>
+
+        <div class="callout">
+          <p><strong>Complex Orchestration Limitations:</strong> While Canvas workflows are powerful, highly complex
+            state pipelines that require persistent long-term tracking, manual intervention, or complex compensation
+            loops are often better suited for full-fledged orchestrators like <strong>Temporal</strong>,
+            <strong>Prefect</strong>, or <strong>Apache Airflow</strong>.
+          </p>
+        </div>
+      </section>
+
+      <!-- Periodic Tasks with Beat -->
+      <section id="celery-beat">
+        <h2>Periodic Tasks with Celery Beat</h2>
+        <p>
+          To run background operations on automatic calendar schedules (similar to Linux cron jobs), use the
+          <strong>Celery Beat</strong> scheduler service. Beat publishes tasks to the broker at scheduled intervals.
+        </p>
+
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">celery_app.py</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code><span class="kw">from</span> celery.schedules <span class="kw">import</span> crontab
+
+app.conf.beat_schedule = {
+    <span class="st">'daily-database-cleanup'</span>: {
+        <span class="st">'task'</span>: <span class="st">'tasks.execute_db_maintenance'</span>,
+        <span class="st">'schedule'</span>: crontab(hour=<span class="pr">2</span>, minute=<span class="pr">30</span>),
+    },
+}</code></pre>
+        </div>
+      </section>
+
+      <!-- Observability with Flower -->
+      <section id="monitoring">
+        <h2>Observability with Flower</h2>
+        <p>
+          Operating blind task clusters in production is extremely risky. <strong>Flower</strong> is a full-featured
+          real-time web monitoring and administration dashboard built specifically for managing distributed Celery
+          nodes.
+        </p>
+        <p>
+          To launch Flower locally, run the tool from your workspace environment:
+        </p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">Terminal Shell</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>celery -A celery_app flower --port=5555</code></pre>
+        </div>
+      </section>
+
+      <!-- Testing Task Queues -->
+      <section id="testing">
+        <h2>Testing Task Queues</h2>
+        <p>
+          Validating distributed tasks cleanly requires isolating worker side-effects from web routing tests. Enable
+          inline eager execution mode for test environments:
+        </p>
+        <div class="code-container">
+          <div class="code-header">
+            <div class="code-label">celery_app.py</div>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <pre><code>app.conf.task_always_eager = <span class="kw">True</span></code></pre>
+        </div>
+      </section>
+
+      <!-- Production Best Practices -->
+      <section id="best-practices">
+        <h2>Production Best Practices</h2>
+        <ul>
+          <li><strong>Pass Database IDs, Not Serialized Models:</strong> Never pass full ORM database instances as
+            arguments to <code>delay()</code>. Task payloads are serialized to JSON; if a model changes in the database
+            while a task waits in the queue, the worker will operate on stale data. Pass string identifiers and let the
+            worker query fresh state.</li>
+          <li><strong>Enforce Idempotency:</strong> Because network partitions can cause message brokers to duplicate
+            task deliveries, design your business logic to run safely multiple times without creating side effects.</li>
+          <li><strong>Late Acknowledgments:</strong> Enable <code>task_acks_late=True</code> for critical database
+            processing loops to ensure workers acknowledge message delivery only after processing successfully.</li>
+        </ul>
+      </section>
+
+    </main>
+
+  </div>
+  <script>
+    /* Inlined from ./script.js */
+    // Clean Minimalist Standalone Article Base JavaScript
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initCodeCopyButtons();
+    });
+
+    // Also run immediately in case the script is loaded after DOMContentLoaded
+    initCodeCopyButtons();
+
+    function initCodeCopyButtons() {
+      document.querySelectorAll('.copy-btn').forEach(btn => {
+        // Prevent binding multiple times if called twice
+        if (btn.dataset.copyInitialized) return;
+        btn.dataset.copyInitialized = "true";
+
+        btn.addEventListener('click', () => {
+          const codeContainer = btn.closest('.code-container');
+          if (!codeContainer) return;
+
+          const codeBlock = codeContainer.querySelector('pre code') || codeContainer.querySelector('pre');
+          if (codeBlock) {
+            navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+              const originalText = btn.textContent;
+              btn.textContent = 'Copied!';
+              btn.style.color = '#34d399';
+              btn.style.borderColor = '#34d399';
+              setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.color = '';
+                btn.style.borderColor = '';
+              }, 2000);
+            }).catch(err => console.error('Copy failed', err));
+          }
+        });
+      });
+    }
+
+  </script>
+  <!-- Vanilla JS Interactive Simulator Functional Logic -->
+  <script>
+    const queue = []
+    let currentTask = null
+    let idCounter = 1
+
+    const queueContainer = document.getElementById('queue-container')
+    const queueCount = document.getElementById('queue-count')
+    const workerBadge = document.getElementById('worker-badge')
+    const workerTask = document.getElementById('worker-task')
+    const workerProgress = document.getElementById('worker-progress')
+    const logConsole = document.getElementById('log-console')
+
+    function appendLog(msg, logClass) {
+      const line = document.createElement('div')
+      line.className = 'log-line'
+      const timeStr = new Date().toLocaleTimeString()
+      line.innerHTML = '<span class="log-time">[' + timeStr + ']</span> <span class="' + (logClass || '') + '">' + msg + '</span>'
+      logConsole.appendChild(line)
+      logConsole.scrollTop = logConsole.scrollHeight
+    }
+
+    function renderQueue() {
+      queueContainer.innerHTML = ''
+      queueCount.textContent = queue.length + ' PENDING'
+
+      if (queue.length === 0) {
+        queueContainer.innerHTML = '<div style="color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 1rem 0;">Queue empty</div>'
+        return
+      }
+
+      queue.forEach(function (item) {
+        const div = document.createElement('div')
+        div.className = 'queue-item'
+        div.innerHTML = '<span>' + item.name + '</span><span style="color: #64748b;">#' + item.id + '</span>'
+        queueContainer.appendChild(div)
+      })
+    }
+
+    function processQueue() {
+      if (currentTask !== null || queue.length === 0) return
+
+      currentTask = queue.shift()
+      renderQueue()
+
+      workerBadge.textContent = 'ACTIVE'
+      workerBadge.className = 'status-badge badge-active'
+      workerTask.textContent = currentTask.name + ' #' + currentTask.id
+      workerProgress.style.width = '0%'
+
+      appendLog('Worker consuming payload: ' + currentTask.name + ' #' + currentTask.id, 'log-active')
+
+      let progress = 0
+      const tick = currentTask.duration / 10
+
+      const timer = setInterval(function () {
+        progress += 10
+        workerProgress.style.width = progress + '%'
+
+        if (progress >= 100) {
+          clearInterval(timer)
+          appendLog('Payload resolved state SUCCESS: #' + currentTask.id, 'log-success')
+
+          workerBadge.textContent = 'IDLE'
+          workerBadge.className = 'status-badge badge-idle'
+          workerTask.textContent = 'Ready'
+          workerProgress.style.width = '0%'
+
+          const completeHook = currentTask.onComplete
+          currentTask = null
+
+          if (completeHook) completeHook()
+
+          setTimeout(processQueue, 300)
+        }
+      }, tick)
+    }
+
+    function enqueueTask(name, duration, onComplete) {
+      const taskObj = {
+        id: idCounter++,
+        name: name,
+        duration: duration,
+        onComplete: onComplete || null
+      }
+      queue.push(taskObj)
+      appendLog('Published task to broker: ' + name + ' #' + taskObj.id, 'log-produced')
+      renderQueue()
+      processQueue()
+    }
+
+    document.getElementById('btn-add-task').addEventListener('click', function () {
+      enqueueTask('send_email_notification', 1000)
+    })
+
+    document.getElementById('btn-add-heavy').addEventListener('click', function () {
+      enqueueTask('transcode_video_h264', 2200)
+    })
+
+    document.getElementById('btn-add-chain').addEventListener('click', function () {
+      appendLog('Dispatching Canvas Workflow chain sequence...', '')
+      enqueueTask('canvas_stage_1_extract', 600, function () {
+        appendLog('Stage 1 finished. Triggering dependent Stage 2 task...', 'log-chain')
+        enqueueTask('canvas_stage_2_transform', 900, function () {
+          appendLog('Stage 2 finished. Triggering aggregate callback task...', 'log-chain')
+          enqueueTask('canvas_stage_3_load', 600, function () {
+            appendLog('Canvas chain sequence fully completed.', 'log-success')
+          })
+        })
+      })
+    })
+  </script>
+</body>
+
+</html>
