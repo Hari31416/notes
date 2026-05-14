@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Overcoming the Memory Wall: High-Throughput LLM Inference Optimization</title>
+    <meta name="description"
+        content="A comprehensive engineering guide covering Speculative Decoding, Quantization, Continuous Batching, Distributed Parallelism Topologies, Prefix Caching, and FlashAttention at hyper-scale." />
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        /* Inlined from ./style.css */
+        /* Clean Minimalist Standalone Article Base Stylesheet */
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-body: #ffffff;
+            --text-main: #1e293b;
+            --text-heading: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --border-soft: #f1f5f9;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --code-bg: #0f172a;
+            --code-text: #f8fafc;
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-heading: "Outfit", sans-serif;
+            --font-mono: "Fira Code", monospace;
+
+            /* Custom Widget Variables */
+            --widget-bg: #f8fafc;
+            --widget-border: #cbd5e1;
+            --success-color: #10b981;
+            --success-light: #d1fae5;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --danger-light: #fee2e2;
+            --info-color: #0ea5e9;
+            --bubble-color: #e2e8f0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.75;
+            font-size: 1.05rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .layout-wrapper {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem 2rem 1.5rem;
+        }
+
+        .article-content {
+            width: 100%;
+        }
+
+        .article-header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .article-title {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-heading);
+            line-height: 1.2;
+        }
+
+        /* Table of Contents */
+        .table-of-contents {
+            background-color: var(--border-soft);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .toc-details summary {
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .toc-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .toc-details h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-heading);
+        }
+
+        .toc-toggle-icon {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .toc-details[open] .toc-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .toc-content {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .table-of-contents ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+
+        .table-of-contents ul ul {
+            padding-left: 1.25rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+            border-left: 1px solid #cbd5e1;
+        }
+
+        .table-of-contents li {
+            margin-bottom: 0.4rem;
+            line-height: 1.4;
+        }
+
+        .table-of-contents a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .table-of-contents ul ul a {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .table-of-contents a:hover {
+            text-decoration: underline;
+            color: var(--accent-hover);
+        }
+
+        /* Article Body Formatting */
+        h2 {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin: 3rem 0 1.25rem 0;
+            line-height: 1.3;
+        }
+
+        h3 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            margin: 2rem 0 1rem 0;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+        }
+
+        strong {
+            color: var(--text-heading);
+            font-weight: 600;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Figures & Images */
+        figure {
+            margin: 2.5rem 0;
+        }
+
+        figure img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: block;
+        }
+
+        figcaption {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Callouts */
+        .callout {
+            background-color: var(--accent-light);
+            border-left: 4px solid var(--accent-color);
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        .callout p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Code Blocks */
+        .code-container {
+            margin: 2rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .code-header {
+            background-color: #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .code-label {
+            color: #94a3b8;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+        }
+
+        .copy-btn {
+            background-color: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 0.15rem 0.5rem;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .copy-btn:hover {
+            background-color: #334155;
+            color: #f8fafc;
+        }
+
+        pre {
+            padding: 1.25rem 1rem;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--code-text);
+        }
+
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            background-color: #f1f5f9;
+            padding: 0.15rem 0.35rem;
+            border-radius: 4px;
+            color: #0f172a;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* Keyword Highlights */
+        .kw {
+            color: #c084fc;
+            font-weight: 500;
+        }
+
+        .fn {
+            color: #38bdf8;
+        }
+
+        .st {
+            color: #a5d6ff;
+        }
+
+        .cm {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .dc {
+            color: #34d399;
+        }
+
+        .pr {
+            color: #f472b6;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--text-heading);
+            background-color: #f8fafc;
+        }
+
+        /* ==========================================================================
+   Custom Interactive Widget Component Styles
+   ========================================================================== */
+
+        .widget-card {
+            background-color: var(--widget-bg);
+            border: 1px solid var(--widget-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2.5rem 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .widget-header {
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .widget-header h4 {
+            font-family: var(--font-heading);
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .widget-header p {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            margin-bottom: 0;
+            margin-top: 0.25rem;
+        }
+
+        .widget-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .widget-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            min-width: 0;
+        }
+
+        .widget-field label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-heading);
+        }
+
+        .widget-select,
+        .widget-input {
+            width: 100%;
+            max-width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background-color: #ffffff;
+            font-family: var(--font-sans);
+            font-size: 0.95rem;
+            color: var(--text-main);
+            outline: none;
+            transition: border-color 0.15s ease;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .widget-select:focus,
+        .widget-input:focus {
+            border-color: var(--accent-color);
+        }
+
+        .widget-range-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .widget-range {
+            flex-grow: 1;
+            accent-color: var(--accent-color);
+        }
+
+        .widget-range-value {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            background-color: var(--border-soft);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .widget-btn {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.6rem 1.25rem;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: background-color 0.15s ease, transform 0.1s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }
+
+        .widget-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .widget-btn:active {
+            transform: scale(0.98);
+        }
+
+        .widget-btn-secondary {
+            background-color: #ffffff;
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .widget-btn-secondary:hover {
+            background-color: var(--border-soft);
+        }
+
+        /* Visualization Display Areas */
+        .widget-display-panel {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin-top: 1rem;
+        }
+
+        /* Capacity Bar */
+        .capacity-tracker {
+            margin-top: 1rem;
+        }
+
+        .capacity-tracker-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .capacity-bar-wrapper {
+            width: 100%;
+            height: 24px;
+            background-color: var(--border-soft);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            display: flex;
+        }
+
+        .capacity-fill-weights {
+            height: 100%;
+            background-color: var(--accent-color);
+            transition: width 0.4s ease;
+        }
+
+        .capacity-fill-kv {
+            height: 100%;
+            background-color: var(--info-color);
+            transition: width 0.4s ease;
+        }
+
+        .capacity-status-alert {
+            margin-top: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: none;
+        }
+
+        .capacity-status-alert.oom {
+            display: block;
+            background-color: var(--danger-light);
+            color: var(--danger-color);
+            border: 1px solid #fca5a5;
+        }
+
+        .capacity-status-alert.ok {
+            display: block;
+            background-color: var(--success-light);
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        /* Metrics Dashboard Grid */
+        .metrics-row {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .metric-box {
+            flex: 1;
+            background-color: var(--border-soft);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .metric-val {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent-color);
+            margin-top: 0.2rem;
+        }
+
+        /* Continuous Batching Matrix */
+        .batching-streams {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .batch-slot {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .batch-slot-label {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 600;
+            width: 65px;
+            color: var(--text-muted);
+        }
+
+        .batch-timeline {
+            flex-grow: 1;
+            height: 36px;
+            background-color: var(--border-soft);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .timeline-cell {
+            flex: 1;
+            border-right: 1px solid rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .timeline-cell.active {
+            background-color: var(--accent-light);
+            color: var(--accent-color);
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .timeline-cell.bubble {
+            background: repeating-linear-gradient(45deg,
+                    #fee2e2,
+                    #fee2e2 5px,
+                    #fef2f2 5px,
+                    #fef2f2 10px);
+            color: var(--danger-color);
+        }
+
+        .timeline-cell.done {
+            background-color: var(--success-light);
+            color: var(--success-color);
+        }
+
+        /* Speculative Trace Display */
+        .token-stream-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 1rem;
+            background-color: var(--code-bg);
+            border-radius: 8px;
+            min-height: 80px;
+            align-items: center;
+        }
+
+        .token-badge {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 6px;
+            background-color: #1e293b;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .token-badge.draft {
+            border-color: var(--info-color);
+            color: var(--info-color);
+            background-color: rgba(14, 165, 233, 0.1);
+        }
+
+        .token-badge.accepted {
+            border-color: var(--success-color);
+            color: #34d399;
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+
+        .token-badge.rejected {
+            border-color: var(--danger-color);
+            color: #fca5a5;
+            background-color: rgba(239, 68, 68, 0.1);
+            text-decoration: line-through;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Parallelism Selector Buttons Group */
+        .topology-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .topology-tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 0.6rem;
+            text-align: center;
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-family: var(--font-heading);
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .topology-tab:hover {
+            color: var(--text-main);
+            background-color: var(--border-soft);
+        }
+
+        .topology-tab.active {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border-color: var(--accent-color);
+        }
+
+        .topology-diagram-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem;
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+        }
+
+        .topology-desc {
+            margin-top: 1.25rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-main);
+            text-align: center;
+            background-color: var(--border-soft);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <main class="article-content">
+            <header class="article-header">
+                <h1 class="article-title">Overcoming the Memory Wall: High-Throughput LLM Inference Optimization</h1>
+            </header>
+
+            <nav class="table-of-contents">
+                <details class="toc-details" open>
+                    <summary class="toc-summary">
+                        <h3>Table of Contents</h3>
+                        <span class="toc-toggle-icon">▼</span>
+                    </summary>
+                    <div class="toc-content">
+                        <ul>
+                            <li>
+                                <a href="#anatomy">1. The Anatomy of LLM Inference Latency</a>
+                                <ul>
+                                    <li><a href="#prefill-decode">Prefill vs. Decoding Bottlenecks</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#quantization">2. Model Precision &amp; Quantization (FP8/AWQ)</a>
+                                <ul>
+                                    <li><a href="#vram-sizing">Weight &amp; KV Cache Compression Mechanics</a></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#batching">3. Dynamic Memory Management: Continuous Batching</a>
+                                <ul>
+                                    <li><a href="#paged-attention">PagedAttention &amp; Iteration-Level Scheduling</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#algorithmic">4. Algorithmic Accelerators: FlashAttention &amp; Prefix
+                                    Caching</a>
+                            </li>
+                            <li>
+                                <a href="#speculative">5. Breaking Autoregressive Boundaries: Speculative Decoding</a>
+                                <ul>
+                                    <li><a href="#spec-variants">Draft Verification &amp; Modern Engine Variants</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <a href="#parallelism">6. Distributed Parallelism Topologies</a>
+                                <ul>
+                                    <li><a href="#tp-pp-dp">Tensor, Pipeline, Model, and Data Parallelism Fabrics</a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </details>
+            </nav>
+
+            <!-- SECTION 1 -->
+            <section id="anatomy">
+                <h2>1. The Anatomy of LLM Inference Latency</h2>
+                <p>
+                    Deploying state-of-the-art Large Language Models (LLMs) to serve millions of citizens requires
+                    shifting engineering focus from basic operational execution to overcoming raw hardware boundaries.
+                    In standard deep learning inference, processing performance is typically constrained by pure
+                    computation capability. However, autoregressive text generation flips this operational constraint
+                    entirely, slamming systems into the physical limit known as the <strong>Memory Wall</strong>.
+                </p>
+
+                <h3 id="prefill-decode">Prefill vs. Decoding Bottlenecks</h3>
+                <p>
+                    Processing an incoming user interaction breaks down into two distinct operational phases, each
+                    exhibiting highly contradictory resource bottlenecks:
+                </p>
+
+                <ul>
+                    <li>
+                        <strong>The Prefill Phase (Compute-Bound):</strong> During initial processing, the inference
+                        engine processes all user prompts and system context tokens simultaneously in parallel. Because
+                        large matrix multiplication operations saturate the GPU tensor cores, this phase scales
+                        efficiently with raw mathematical processing compute capabilities.
+                    </li>
+                    <li>
+                        <strong>The Decoding Phase (Memory-Bandwidth Bound):</strong> Once context is evaluated,
+                        generating subsequent text output happens autoregressively—one token at a time. Generating a
+                        single new token requires streaming the entire model parameter weight array from slow
+                        High-Bandwidth Memory (HBM) directly into the processing registers. Consequently, processing
+                        speeds become limited entirely by <strong>Memory Bandwidth</strong> rather than available
+                        floating-point arithmetic units.
+                    </li>
+                </ul>
+
+                <figure>
+                    <svg viewBox="0 0 760 220" width="100%" height="auto"
+                        style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <defs>
+                            <linearGradient id="gradCompute" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#3b82f6" />
+                                <stop offset="100%" stop-color="#1d4ed8" />
+                            </linearGradient>
+                            <linearGradient id="gradMemory" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#10b981" />
+                                <stop offset="100%" stop-color="#047857" />
+                            </linearGradient>
+                        </defs>
+                        <!-- Phase Blocks -->
+                        <rect x="40" y="30" width="220" height="120" rx="6" fill="url(#gradCompute)" />
+                        <text x="150" y="85" fill="#ffffff" font-family="Outfit" font-size="18" font-weight="700"
+                            text-anchor="middle">Prefill Phase</text>
+                        <text x="150" y="110" fill="#eff6ff" font-family="Inter" font-size="13"
+                            text-anchor="middle">Compute-Bound (Parallel)</text>
+
+                        <path d="M 275 90 L 325 90" stroke="#94a3b8" stroke-width="3" marker-end="url(#arrow)" />
+
+                        <rect x="340" y="30" width="380" height="120" rx="6" fill="url(#gradMemory)" />
+                        <text x="530" y="70" fill="#ffffff" font-family="Outfit" font-size="18" font-weight="700"
+                            text-anchor="middle">Autoregressive Decoding Phase</text>
+                        <text x="530" y="95" fill="#ecfdf5" font-family="Inter" font-size="13"
+                            text-anchor="middle">Memory-Bandwidth Bound (Sequential Tokens)</text>
+
+                        <!-- Token nodes -->
+                        <circle cx="430" cy="125" r="12" fill="#ffffff" />
+                        <text x="430" y="129" font-family="Fira Code" font-size="11" font-weight="600"
+                            text-anchor="middle" fill="#0f172a">T₁</text>
+
+                        <circle cx="480" cy="125" r="12" fill="#ffffff" />
+                        <text x="480" y="129" font-family="Fira Code" font-size="11" font-weight="600"
+                            text-anchor="middle" fill="#0f172a">T₂</text>
+
+                        <circle cx="530" cy="125" r="12" fill="#ffffff" />
+                        <text x="530" y="129" font-family="Fira Code" font-size="11" font-weight="600"
+                            text-anchor="middle" fill="#0f172a">T₃</text>
+
+                        <circle cx="580" cy="125" r="12" fill="#ffffff" />
+                        <text x="580" y="129" font-family="Fira Code" font-size="11" font-weight="600"
+                            text-anchor="middle" fill="#0f172a">T₄</text>
+
+                        <circle cx="630" cy="125" r="12" fill="#ffffff" opacity="0.5" />
+                        <text x="630" y="129" font-family="Fira Code" font-size="11" font-weight="600"
+                            text-anchor="middle" fill="#0f172a">...</text>
+
+                        <!-- Marker -->
+                        <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6"
+                            orient="auto-start-reverse">
+                            <path d="M 0 2 L 8 5 L 0 8 z" fill="#94a3b8" />
+                        </marker>
+
+                        <text x="380" y="195" font-family="Inter" font-size="13" font-weight="600" fill="#64748b"
+                            text-anchor="middle">High VRAM Sizing</text>
+                        <text x="680" y="195" font-family="Inter" font-size="13" font-weight="600" fill="#64748b"
+                            text-anchor="middle">Latency Critical</text>
+                    </svg>
+                    <figcaption>Operational transition from highly parallelized prompt context ingestion directly into
+                        strict token-by-token sequential decoding bandwidth bottlenecks.</figcaption>
+                </figure>
+            </section>
+
+            <!-- SECTION 2 -->
+            <section id="quantization">
+                <h2>2. Model Precision &amp; Quantization (FP8/AWQ)</h2>
+                <p>
+                    To serve massive concurrent workloads efficiently, reducing parameter precision has transitioned
+                    into an essential baseline practice. Quantization shrinks physical tensor storage sizes, directly
+                    enabling models to fit larger batch execution matrices into accessible High-Bandwidth Memory without
+                    experiencing critical task accuracy loss.
+                </p>
+
+                <h3 id="vram-sizing">Weight &amp; KV Cache Compression Mechanics</h3>
+                <p>
+                    Production clusters utilize two separate quantization vectors:
+                </p>
+
+                <ul>
+                    <li>
+                        <strong>Weight Quantization (FP8 &amp; AWQ):</strong> Standard deployments shift processing from
+                        legacy 16-bit floating-point architectures down to native <strong>FP8 (E4M3)</strong> formats.
+                        For severely memory-constrained nodes, algorithms like Activation-aware Weight Quantization
+                        (<strong>AWQ</strong>) reduce specific parameters down to 4-bit integers while protecting highly
+                        salient activation channels to prevent model degradation.
+                    </li>
+                    <li>
+                        <strong>KV Cache Compression:</strong> Retaining previous key and value attention vectors across
+                        lengthy interactions consumes vast amounts of auxiliary RAM. Compressing cached states into
+                        target FP8 or INT8 matrix blocks allows systems to scale active context windows horizontally
+                        without out-of-memory crashes.
+                    </li>
+                </ul>
+
+                <!-- WIDGET 1 -->
+                <div class="widget-card">
+                    <div class="widget-header">
+                        <h4>Interactive Cluster VRAM Sizing Engine</h4>
+                        <p>Evaluate exact hardware capacity requirements across model scales, active precision formats,
+                            and context lengths.</p>
+                    </div>
+
+                    <div class="widget-grid">
+                        <div class="widget-field">
+                            <label for="quant-model">Base Model Architecture</label>
+                            <select id="quant-model" class="widget-select">
+                                <option value="8">Llama-3-8B (Dense)</option>
+                                <option value="70" selected>Llama-3-70B (Production Standard)</option>
+                                <option value="405">Llama-3-405B (Hyperscale Core)</option>
+                                <option value="671">DeepSeek-R1-671B (MoE Architecture)</option>
+                            </select>
+                        </div>
+
+                        <div class="widget-field">
+                            <label for="quant-prec">Parameter &amp; KV Cache Precision</label>
+                            <select id="quant-prec" class="widget-select">
+                                <option value="16">FP16 / BF16 (Uncompressed Baseline)</option>
+                                <option value="8" selected>FP8 (Production Default Hopper+)</option>
+                                <option value="4">AWQ / GPTQ INT4 (Extreme Edge Compression)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="widget-grid">
+                        <div class="widget-field">
+                            <label for="quant-ctx">Target Context Length per Sequence</label>
+                            <div class="widget-range-container">
+                                <input type="range" id="quant-ctx" class="widget-range" min="4" max="128" step="4"
+                                    value="32" />
+                                <span id="quant-ctx-val" class="widget-range-value">32k</span>
+                            </div>
+                        </div>
+
+                        <div class="widget-field">
+                            <label for="quant-gpu">Target Hardware Deployment</label>
+                            <select id="quant-gpu" class="widget-select">
+                                <option value="80">1x NVIDIA H100 (80GB VRAM)</option>
+                                <option value="320" selected>4x NVIDIA H100 Node (320GB Total VRAM)</option>
+                                <option value="640">8x NVIDIA H100 Node (640GB Total VRAM)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="widget-display-panel">
+                        <div class="metrics-row" style="margin-top: 0;">
+                            <div class="metric-box">
+                                <div class="metric-label">Model Weights VRAM</div>
+                                <div id="weight-vram-val" class="metric-val">-- GB</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">KV Cache Footprint (B=16)</div>
+                                <div id="kv-vram-val" class="metric-val">-- GB</div>
+                            </div>
+                            <div class="metric-box"
+                                style="background-color: var(--accent-light); border-color: #bfdbfe;">
+                                <div class="metric-label" style="color: var(--accent-hover);">Total Required VRAM</div>
+                                <div id="total-vram-val" class="metric-val" style="color: var(--accent-hover);">-- GB
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="capacity-tracker">
+                            <div class="capacity-tracker-labels">
+                                <span>Hardware Capacity Allocation Map</span>
+                                <span style="color: var(--text-muted); font-weight: normal;">Blue = Weights | Cyan = KV
+                                    Cache</span>
+                            </div>
+                            <div class="capacity-bar-wrapper">
+                                <div id="cap-fill-weights" class="capacity-fill-weights"></div>
+                                <div id="cap-fill-kv" class="capacity-fill-kv"></div>
+                            </div>
+                            <div id="cap-alert" class="capacity-status-alert"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout">
+                    <p>
+                        <strong>Operational Insight:</strong> Relying on native FP8 formats across Hopper and Blackwell
+                        architectures maximizes tensor engine execution without requiring complex recalibration phases.
+                    </p>
+                </div>
+            </section>
+
+            <!-- SECTION 3 -->
+            <section id="batching">
+                <h2>3. Dynamic Memory Management: Continuous Batching</h2>
+                <p>
+                    Traditional serving mechanisms force incoming interactions to execute within static batch matrices.
+                    Under static scheduling, whole GPU resource allocations remain blocked until the absolute longest
+                    sequence inside an active cluster completes execution. This systemic bottleneck generates
+                    computational "bubbles"—prolonged operational phases where active graphics cores sit completely idle
+                    waiting for final generation loops.
+                </p>
+
+                <h3 id="paged-attention">PagedAttention &amp; Iteration-Level Scheduling</h3>
+                <p>
+                    Modern inference engines (such as vLLM) implement <strong>Continuous Batching</strong>
+                    (iteration-level scheduling) combined with native <strong>PagedAttention</strong> memory mapping
+                    models. PagedAttention eliminates runtime memory fragmentation entirely by partitioning contiguous
+                    KV cache arrays into independent virtual blocks. As soon as an active user interaction completes,
+                    the scheduler instantly evicts its state and schedules an available pending connection directly into
+                    the execution decode loop.
+                </p>
+
+                <!-- WIDGET 2 -->
+                <div class="widget-card">
+                    <div class="widget-header">
+                        <h4>Continuous vs. Static Batching</h4>
+                        <p>Observe iteration execution trace metrics across incoming concurrent request profiles.</p>
+                    </div>
+
+                    <div class="widget-grid" style="align-items: flex-end;">
+                        <div class="widget-field">
+                            <label for="batch-mode">Scheduling Architecture</label>
+                            <select id="batch-mode" class="widget-select">
+                                <option value="static">Static Batching (Legacy Array Lock)</option>
+                                <option value="continuous" selected>Continuous Batching (Iteration-Level Eviction)
+                                </option>
+                            </select>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button id="batch-spawn-btn" class="widget-btn widget-btn-secondary" style="flex: 1;">Reset
+                                Queues</button>
+                            <button id="batch-step-btn" class="widget-btn" style="flex: 1;">Step Iteration
+                                Cycle</button>
+                        </div>
+                    </div>
+
+                    <div class="widget-display-panel">
+                        <div
+                            style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+                            <span style="font-size: 0.85rem; font-weight: 600;">Live Decode Iteration Timeline (T₀ →
+                                T₁₅)</span>
+                            <div style="display: flex; gap: 1rem; font-size: 0.8rem;">
+                                <span style="display: flex; align-items: center; gap: 0.25rem;"><span
+                                        style="display: inline-block; width: 10px; height: 10px; background-color: var(--accent-light); border: 1px solid var(--accent-color);"></span>
+                                    Active Decode</span>
+                                <span style="display: flex; align-items: center; gap: 0.25rem;"><span
+                                        style="display: inline-block; width: 10px; height: 10px; background-color: #fee2e2; border: 1px solid #ef4444;"></span>
+                                    GPU Idle Bubble</span>
+                            </div>
+                        </div>
+
+                        <div id="batch-streams-container" class="batching-streams"></div>
+
+                        <div class="metrics-row">
+                            <div class="metric-box">
+                                <div class="metric-label">Overall GPU Compute Efficiency</div>
+                                <div id="batch-eff-val" class="metric-val">--%</div>
+                            </div>
+                            <div class="metric-box">
+                                <div class="metric-label">Effective Cluster Throughput</div>
+                                <div id="batch-tput-val" class="metric-val" style="color: var(--info-color);">-- tok/s
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4 -->
+            <section id="algorithmic">
+                <h2>4. Algorithmic Accelerators: FlashAttention &amp; Prefix Caching</h2>
+                <p>
+                    Alongside dynamic iteration schedulers, raw throughput scaling demands algorithmic software
+                    co-design to minimize parameter transit latency overheads directly.
+                </p>
+
+                <ul>
+                    <li>
+                        <strong>FlashAttention-3:</strong> Calculating standard self-attention matrices forces
+                        processing hardware to materialize vast quadratic memory tensors directly inside High-Bandwidth
+                        Memory channels. FlashAttention bypasses this transit loop entirely by restructuring attention
+                        loops into localized SRAM compute blocks. Tiling operations directly inside fast on-chip memory
+                        layers yields dramatic execution speedups across extensive context interactions.
+                    </li>
+                    <li>
+                        <strong>Automatic Prefix Caching (Prompt Caching):</strong> When processing national-level
+                        assistants, hundreds of incoming citizen queries share identical system instruction preamble
+                        texts. Prefix caching identifies matching prompt structural prefixes at intake gateways and
+                        bypasses prefill processing stages entirely by serving retained active KV attention maps
+                        directly from system storage layers.
+                    </li>
+                </ul>
+
+                <div class="code-container">
+                    <div class="code-header">
+                        <div class="code-label">vllm_production_launch.sh</div>
+                        <button class="copy-btn">Copy</button>
+                    </div>
+                    <pre><code><span class="kw">vllm</span> serve meta-llama/Llama-3-70B-Instruct \
+  <span class="pr">--kv-cache-dtype</span> fp8 \
+  <span class="pr">--enable-prefix-caching</span> \
+  <span class="pr">--max-model-len</span> 32768 \
+  <span class="pr">--tensor-parallel-size</span> 4</code></pre>
+                </div>
+            </section>
+
+            <!-- SECTION 5 -->
+            <section id="speculative">
+                <h2>5. Breaking Autoregressive Boundaries: Speculative Decoding</h2>
+                <p>
+                    Because standard decoding processes force individual layer parameter passes for every generated
+                    token output, systems encounter strict upper bounds on generation execution speeds.
+                    <strong>Speculative Decoding</strong> shatters this operational barrier by decoupling candidate
+                    token generation from structural semantic verification phases.
+                </p>
+
+                <h3 id="spec-variants">Draft Verification &amp; Modern Engine Variants</h3>
+                <p>
+                    Systems leverage a compact, highly accelerated "draft" engine to predict multiple upcoming candidate
+                    tokens rapidly. Subsequently, the primary deployed national model ingests these candidate tokens and
+                    evaluates their operational probability distribution functions simultaneously in a single
+                    parallelized forward execution pass. Accepted tokens append directly into the output connection
+                    stream, effectively multiplying cluster throughput outputs without altering underlying response
+                    generation accuracy metrics.
+                </p>
+
+                <ul>
+                    <li><strong>Medusa Architecture:</strong> Integrates specialized parallel prediction heads directly
+                        onto primary base model parameters, eliminating auxiliary dual-model coordination overheads
+                        entirely.</li>
+                    <li><strong>EAGLE Decoding:</strong> Propagates target engine feature representations forward to
+                        elevate candidate prediction acceptance ratios dramatically across complicated context
+                        parameters.</li>
+                </ul>
+
+                <!-- WIDGET 3 -->
+                <div class="widget-card">
+                    <div class="widget-header">
+                        <h4>Speculative Verification Trace</h4>
+                        <p>Simulate parallel token candidate sampling and strict target distribution verification rules.
+                        </p>
+                    </div>
+
+                    <div class="widget-grid" style="align-items: center;">
+                        <div class="widget-field">
+                            <label for="spec-thresh">Probability Acceptance Threshold</label>
+                            <div class="widget-range-container">
+                                <input type="range" id="spec-thresh" class="widget-range" min="0.5" max="0.9"
+                                    step="0.05" value="0.7" />
+                                <span id="spec-thresh-val" class="widget-range-value">0.70</span>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+                            <button id="spec-draft-btn" class="widget-btn widget-btn-secondary">1. Sample Draft
+                                Tokens</button>
+                            <button id="spec-verify-btn" class="widget-btn">2. Execute Target Verification</button>
+                        </div>
+                    </div>
+
+                    <div class="widget-display-panel">
+                        <span
+                            style="font-size: 0.85rem; font-weight: 600; display: block; margin-bottom: 0.5rem;">Speculative
+                            Pipeline Stream Evaluation Window</span>
+                        <div id="spec-stream-container" class="token-stream-container"></div>
+
+                        <div class="metrics-row">
+                            <div class="metric-box">
+                                <div class="metric-label">Tokens Emitted per Forward Pass</div>
+                                <div id="spec-tokens-val" class="metric-val" style="color: var(--text-heading);">--
+                                </div>
+                            </div>
+                            <div class="metric-box"
+                                style="background-color: var(--success-light); border-color: #a7f3d0;">
+                                <div class="metric-label" style="color: #065f46;">Effective Latency Speedup</div>
+                                <div id="spec-speedup-val" class="metric-val" style="color: var(--success-color);">--x
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 6 -->
+            <section id="parallelism">
+                <h2>6. Distributed Parallelism Topologies</h2>
+                <p>
+                    When deploying massive base models (such as Llama-3-70B or 405B), singular hardware units cannot
+                    house required layer states. Consequently, architects distribute execution matrices across
+                    coordinated clustered compute fabrics using complex topological configurations.
+                </p>
+
+                <h3 id="tp-pp-dp">Tensor, Pipeline, Model, and Data Parallelism Fabrics</h3>
+                <p>
+                    Scaling parameters effectively requires balancing inter-node networking bandwidth constraints
+                    alongside compute engine execution speeds:
+                </p>
+
+                <!-- WIDGET 4 -->
+                <div class="widget-card" style="margin-top: 1.5rem;">
+                    <div class="topology-tabs">
+                        <button class="topology-tab active" data-topo="tp">Tensor Parallelism (TP)</button>
+                        <button class="topology-tab" data-topo="pp">Pipeline Parallelism (PP)</button>
+                        <button class="topology-tab" data-topo="dp">Data Parallelism (DP)</button>
+                        <button class="topology-tab" data-topo="hybrid">Hybrid Model Parallelism</button>
+                    </div>
+
+                    <div class="topology-diagram-panel">
+                        <svg viewBox="0 0 600 240" width="100%" height="auto" style="max-width: 500px;">
+                            <!-- Node Framework Base Layout -->
+                            <!-- GPU 0 -->
+                            <rect class="topology-node" x="50" y="40" width="90" height="50" rx="6" fill="#eff6ff"
+                                stroke="#2563eb" stroke-width="2" />
+                            <text x="95" y="70" font-family="Outfit" font-size="14" font-weight="700"
+                                text-anchor="middle" fill="#0f172a">GPU 0</text>
+
+                            <!-- GPU 1 -->
+                            <rect class="topology-node" x="190" y="40" width="90" height="50" rx="6" fill="#eff6ff"
+                                stroke="#2563eb" stroke-width="2" />
+                            <text x="235" y="70" font-family="Outfit" font-size="14" font-weight="700"
+                                text-anchor="middle" fill="#0f172a">GPU 1</text>
+
+                            <!-- GPU 2 -->
+                            <rect class="topology-node" x="330" y="40" width="90" height="50" rx="6" fill="#eff6ff"
+                                stroke="#2563eb" stroke-width="2" />
+                            <text x="375" y="70" font-family="Outfit" font-size="14" font-weight="700"
+                                text-anchor="middle" fill="#0f172a">GPU 2</text>
+
+                            <!-- GPU 3 -->
+                            <rect class="topology-node" x="470" y="40" width="90" height="50" rx="6" fill="#eff6ff"
+                                stroke="#2563eb" stroke-width="2" />
+                            <text x="515" y="70" font-family="Outfit" font-size="14" font-weight="700"
+                                text-anchor="middle" fill="#0f172a">GPU 3</text>
+
+                            <!-- Node Framework Tier 2 -->
+                            <!-- GPU 4 -->
+                            <rect class="topology-node" x="50" y="150" width="90" height="50" rx="6" fill="#eff6ff"
+                                stroke="#2563eb" stroke-width="2" />
+                            <text x="95" y="180" font-family="Outfit" font-size="14" font-weight="700"
+                                text-anchor="middle" fill="#0f172a">GPU 4</text>
+
+                            <!-- GPU 5 -->
+                            <rect class="topology-node" x="190" y="150" width="90" height="50" rx="6" fill="#eff6ff"
+                                stroke="#2563eb" stroke-width="2" />
+                            <text x="235" y="180" font-family="Outfit" font-size="14" font-weight="700"
+                                text-anchor="middle" fill="#0f172a">GPU 5</text>
+
+                            <!-- GPU 6 -->
+                            <rect class="topology-node" x="330" y="150" width="90" height="50" rx="6" fill="#eff6ff"
+                                stroke="#2563eb" stroke-width="2" />
+                            <text x="375" y="180" font-family="Outfit" font-size="14" font-weight="700"
+                                text-anchor="middle" fill="#0f172a">GPU 6</text>
+
+                            <!-- GPU 7 -->
+                            <rect class="topology-node" x="470" y="150" width="90" height="50" rx="6" fill="#eff6ff"
+                                stroke="#2563eb" stroke-width="2" />
+                            <text x="515" y="180" font-family="Outfit" font-size="14" font-weight="700"
+                                text-anchor="middle" fill="#0f172a">GPU 7</text>
+
+                            <!-- Interconnect links Row 1 -->
+                            <line class="topology-link" x1="140" y1="65" x2="190" y2="65" stroke="#2563eb"
+                                stroke-width="3" />
+                            <line class="topology-link" x1="280" y1="65" x2="330" y2="65" stroke="#2563eb"
+                                stroke-width="3" />
+                            <line class="topology-link" x1="420" y1="65" x2="470" y2="65" stroke="#2563eb"
+                                stroke-width="3" />
+
+                            <!-- Interconnect links Row 2 -->
+                            <line class="topology-link" x1="140" y1="175" x2="190" y2="175" stroke="#2563eb"
+                                stroke-width="3" />
+                            <line class="topology-link" x1="280" y1="175" x2="330" y2="175" stroke="#2563eb"
+                                stroke-width="3" />
+                            <line class="topology-link" x1="420" y1="175" x2="470" y2="175" stroke="#2563eb"
+                                stroke-width="3" />
+
+                            <!-- Cross Connects -->
+                            <line class="topology-link" x1="95" y1="90" x2="95" y2="150" stroke="#2563eb"
+                                stroke-width="3" />
+                            <line class="topology-link" x1="235" y1="90" x2="235" y2="150" stroke="#2563eb"
+                                stroke-width="3" />
+                            <line class="topology-link" x1="375" y1="90" x2="375" y2="150" stroke="#2563eb"
+                                stroke-width="3" />
+                            <line class="topology-link" x1="515" y1="90" x2="515" y2="150" stroke="#2563eb"
+                                stroke-width="3" />
+                        </svg>
+
+                        <div id="topology-desc-text" class="topology-desc">
+                            <strong>Tensor Parallelism (Intra-Node):</strong> Shards individual Linear layers across
+                            multiple GPUs using high-speed NVLink channels. Achieves extremely low latency for
+                            individual sequence decodes but introduces dense ALL-REDUCE synchronization barriers
+                            overhead.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="callout" style="border-color: var(--warning-color); background-color: #fffbeb;">
+                    <p>
+                        <strong>Architectural Tradeoff:</strong> Implementing pure Pipeline Parallelism is technically
+                        straightforward but introduces unavoidable fill/drain execution bubbles. For hyperscale serving,
+                        hybrid configurations utilizing Tensor Parallelism within isolated node frameworks alongside
+                        Pipeline routing across external network hardware achieves optimal compute utilization.
+                    </p>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script>
+        /* Inlined from ./script.js */
+        // Clean Minimalist Standalone Article Base JavaScript
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initCodeCopyButtons();
+            initQuantizationWidget();
+            initBatchingWidget();
+            initSpeculativeWidget();
+            initTopologyWidget();
+        });
+
+        // Also run immediately in case the script is loaded after DOMContentLoaded
+        initCodeCopyButtons();
+
+        function initCodeCopyButtons() {
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                if (btn.dataset.copyInitialized) return;
+                btn.dataset.copyInitialized = "true";
+
+                btn.addEventListener('click', () => {
+                    const codeContainer = btn.closest('.code-container');
+                    if (!codeContainer) return;
+
+                    const codeBlock = codeContainer.querySelector('pre code') || codeContainer.querySelector('pre');
+                    if (codeBlock) {
+                        navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+                            const originalText = btn.textContent;
+                            btn.textContent = 'Copied!';
+                            btn.style.color = '#34d399';
+                            btn.style.borderColor = '#34d399';
+                            setTimeout(() => {
+                                btn.textContent = originalText;
+                                btn.style.color = '';
+                                btn.style.borderColor = '';
+                            }, 2000);
+                        }).catch(err => console.error('Copy failed', err));
+                    }
+                });
+            });
+        }
+
+        /* ==========================================================================
+           Widget 1: Quantization & VRAM Capacity Engine Logic
+           ========================================================================== */
+        function initQuantizationWidget() {
+            const modelSelect = document.getElementById('quant-model');
+            const precSelect = document.getElementById('quant-prec');
+            const ctxSlider = document.getElementById('quant-ctx');
+            const ctxVal = document.getElementById('quant-ctx-val');
+            const gpuSelect = document.getElementById('quant-gpu');
+
+            const weightVramEl = document.getElementById('weight-vram-val');
+            const kvVramEl = document.getElementById('kv-vram-val');
+            const totalVramEl = document.getElementById('total-vram-val');
+
+            const fillWeights = document.getElementById('cap-fill-weights');
+            const fillKv = document.getElementById('cap-fill-kv');
+            const alertEl = document.getElementById('cap-alert');
+
+            if (!modelSelect) return;
+
+            function calculateVRAM() {
+                const modelSizeB = parseFloat(modelSelect.value);
+                const bits = parseFloat(precSelect.value);
+                const ctxLenK = parseFloat(ctxSlider.value);
+                const totalGpuMem = parseFloat(gpuSelect.value);
+
+                ctxVal.textContent = `${ctxLenK}k`;
+
+                // Weight VRAM: (Parameters * bytes_per_param) * 1.05 overhead buffer
+                const weightVRAM = modelSizeB * (bits / 8) * 1.05;
+
+                // KV Cache VRAM estimation: scales with Context Length, Model Size, and KV Precision
+                // Base estimation for batch size = 16 concurrent sequences
+                const baseKvMultiplier = (modelSizeB / 70) * 0.00012;
+                const kvVRAM = (ctxLenK * 1024) * baseKvMultiplier * (bits / 8) * 16;
+
+                const totalVRAM = weightVRAM + kvVRAM;
+
+                weightVramEl.textContent = `${weightVRAM.toFixed(1)} GB`;
+                kvVramEl.textContent = `${kvVRAM.toFixed(1)} GB`;
+                totalVramEl.textContent = `${totalVRAM.toFixed(1)} GB`;
+
+                // Calculate fill percentages
+                const weightPct = Math.min(100, (weightVRAM / totalGpuMem) * 100);
+                const kvPct = Math.min(100 - weightPct, (kvVRAM / totalGpuMem) * 100);
+
+                fillWeights.style.width = `${weightPct}%`;
+                fillKv.style.width = `${kvPct}%`;
+
+                // Alert update
+                alertEl.className = 'capacity-status-alert';
+                if (totalVRAM > totalGpuMem) {
+                    alertEl.classList.add('oom');
+                    alertEl.innerHTML = `<strong>CRITICAL OOM ALERT:</strong> Total footprint (${totalVRAM.toFixed(1)} GB) exceeds available cluster VRAM (${totalGpuMem} GB). <em>Mitigation: Enable Tensor Parallelism across more nodes or compress weights down to FP8/INT4.</em>`;
+                } else {
+                    alertEl.classList.add('ok');
+                    const headroom = totalGpuMem - totalVRAM;
+                    alertEl.innerHTML = `<strong>Status Optimal:</strong> Configuration fits safely inside High-Bandwidth Memory. Reserved headroom: ${headroom.toFixed(1)} GB for decoding bursts.`;
+                }
+            }
+
+            modelSelect.addEventListener('change', calculateVRAM);
+            precSelect.addEventListener('change', calculateVRAM);
+            ctxSlider.addEventListener('input', calculateVRAM);
+            gpuSelect.addEventListener('change', calculateVRAM);
+
+            // Initial run
+            calculateVRAM();
+        }
+
+        /* ==========================================================================
+           Widget 2: Continuous Batching vs. Static Batching Engine Logic
+           ========================================================================== */
+        function initBatchingWidget() {
+            const modeSelect = document.getElementById('batch-mode');
+            const spawnBtn = document.getElementById('batch-spawn-btn');
+            const stepBtn = document.getElementById('batch-step-btn');
+            const effEl = document.getElementById('batch-eff-val');
+            const tputEl = document.getElementById('batch-tput-val');
+            const streamsContainer = document.getElementById('batch-streams-container');
+
+            if (!modeSelect) return;
+
+            let slots = [];
+            let currentIteration = 0;
+            const maxIterations = 16;
+
+            // Slot initialization lengths
+            const targetLengths = [6, 12, 8, 16];
+
+            function spawnRequests() {
+                slots = targetLengths.map((len, idx) => ({
+                    id: `Req-${String.fromCharCode(65 + idx)}`,
+                    targetLen: len,
+                    doneLen: 0,
+                    cells: [],
+                    completedAtIteration: null
+                }));
+                currentIteration = 0;
+                renderMatrix();
+                updateMetrics();
+            }
+
+            function renderMatrix() {
+                streamsContainer.innerHTML = '';
+                slots.forEach(slot => {
+                    const slotDiv = document.createElement('div');
+                    slotDiv.className = 'batch-slot';
+
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'batch-slot-label';
+                    labelDiv.textContent = slot.id;
+
+                    const timelineDiv = document.createElement('div');
+                    timelineDiv.className = 'batch-timeline';
+
+                    // Render static width placeholder grid up to maxIterations
+                    for (let i = 0; i < maxIterations; i++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'timeline-cell';
+
+                        if (i < slot.cells.length) {
+                            const state = slot.cells[i];
+                            cell.classList.add(state);
+                            if (state === 'active') cell.textContent = 'T';
+                            else if (state === 'bubble') cell.textContent = 'B';
+                            else if (state === 'done') cell.textContent = '✓';
+                        }
+                        timelineDiv.appendChild(cell);
+                    }
+
+                    slotDiv.appendChild(labelDiv);
+                    slotDiv.appendChild(timelineDiv);
+                    streamsContainer.appendChild(slotDiv);
+                });
+            }
+
+            function stepIteration() {
+                if (currentIteration >= maxIterations) return;
+                const mode = modeSelect.value;
+
+                slots.forEach((slot, idx) => {
+                    if (slot.doneLen < slot.targetLen) {
+                        slot.doneLen++;
+                        slot.cells.push('active');
+                        if (slot.doneLen === slot.targetLen) {
+                            slot.completedAtIteration = currentIteration;
+                        }
+                    } else {
+                        if (mode === 'static') {
+                            // Static keeps memory locked until entire max len finishes
+                            slot.cells.push('bubble');
+                        } else {
+                            // Continuous instantly schedules a new incoming request queued
+                            // Cycle label to simulate fresh injection
+                            slot.id = `Req-${String.fromCharCode(65 + slots.length + Math.floor(Math.random() * 10))}`;
+                            slot.targetLen = 6 + Math.floor(Math.random() * 8);
+                            slot.doneLen = 1;
+                            slot.cells.push('active');
+                        }
+                    }
+                });
+
+                currentIteration++;
+                renderMatrix();
+                updateMetrics();
+            }
+
+            function updateMetrics() {
+                let activeCount = 0;
+                let bubbleCount = 0;
+                let totalRendered = 0;
+
+                slots.forEach(slot => {
+                    slot.cells.forEach(c => {
+                        totalRendered++;
+                        if (c === 'active') activeCount++;
+                        if (c === 'bubble') bubbleCount++;
+                    });
+                });
+
+                const efficiency = totalRendered > 0 ? (activeCount / totalRendered) * 100 : 0;
+                effEl.textContent = `${efficiency.toFixed(0)}%`;
+
+                const baseTput = modeSelect.value === 'static' ? 450 : 890;
+                const multiplier = efficiency > 0 ? (efficiency / 100) : 0.1;
+                tputEl.textContent = `${Math.floor(baseTput * multiplier)} tok/s`;
+            }
+
+            spawnBtn.addEventListener('click', spawnRequests);
+            stepBtn.addEventListener('click', stepIteration);
+            modeSelect.addEventListener('change', spawnRequests);
+
+            // Initial state
+            spawnRequests();
+        }
+
+        /* ==========================================================================
+           Widget 3: Speculative Decoding Trace Logic
+           ========================================================================== */
+        function initSpeculativeWidget() {
+            const draftBtn = document.getElementById('spec-draft-btn');
+            const verifyBtn = document.getElementById('spec-verify-btn');
+            const slider = document.getElementById('spec-thresh');
+            const threshVal = document.getElementById('spec-thresh-val');
+            const streamContainer = document.getElementById('spec-stream-container');
+            const speedupEl = document.getElementById('spec-speedup-val');
+            const tokensEl = document.getElementById('spec-tokens-val');
+
+            if (!draftBtn) return;
+
+            let currentDrafts = [];
+            const sampleWords = ["scaling", "throughput", "governance", "hyper-cluster", "matrix", "attention", "tensor", "shards"];
+
+            function generateDraft() {
+                streamContainer.innerHTML = '';
+                currentDrafts = [];
+                const thresh = parseFloat(slider.value);
+                threshVal.textContent = `${thresh.toFixed(2)}`;
+
+                // Draft generates 4 candidate guesses
+                for (let i = 0; i < 4; i++) {
+                    const word = sampleWords[Math.floor(Math.random() * sampleWords.length)];
+                    // Create random confidence scores
+                    const score = 0.45 + Math.random() * 0.52;
+                    currentDrafts.push({ word, score, state: 'draft' });
+
+                    const badge = document.createElement('div');
+                    badge.className = 'token-badge draft';
+                    badge.innerHTML = `<span>${word}</span> <code>${score.toFixed(2)}</code>`;
+                    streamContainer.appendChild(badge);
+                }
+
+                verifyBtn.disabled = false;
+                speedupEl.textContent = '1.00x';
+                tokensEl.textContent = '0 / forward pass';
+            }
+
+            function verifyDraft() {
+                verifyBtn.disabled = true;
+                streamContainer.innerHTML = '';
+                const thresh = parseFloat(slider.value);
+
+                let acceptedCount = 0;
+                let rejectedEncountered = false;
+
+                currentDrafts.forEach(item => {
+                    const badge = document.createElement('div');
+
+                    if (!rejectedEncountered) {
+                        if (item.score >= thresh) {
+                            badge.className = 'token-badge accepted';
+                            badge.innerHTML = `<span>${item.word}</span> <code>✓ verified</code>`;
+                            acceptedCount++;
+                            streamContainer.appendChild(badge);
+                        } else {
+                            badge.className = 'token-badge rejected';
+                            badge.innerHTML = `<span>${item.word}</span> <code>✗ rejected</code>`;
+                            rejectedEncountered = true;
+                            streamContainer.appendChild(badge);
+
+                            // Add target correction token immediately following rejection
+                            const correctionBadge = document.createElement('div');
+                            correctionBadge.className = 'token-badge accepted';
+                            correctionBadge.innerHTML = `<span>[target-correction]</span> <code>✓ appended</code>`;
+                            streamContainer.appendChild(correctionBadge);
+                            acceptedCount++; // Correction counts as emitted token for this pass
+                        }
+                    } else {
+                        // Tokens post-rejection are discarded entirely
+                    }
+                });
+
+                // If all accepted cleanly, append one final base target token as free generation jump
+                if (!rejectedEncountered) {
+                    const finalBadge = document.createElement('div');
+                    finalBadge.className = 'token-badge accepted';
+                    finalBadge.innerHTML = `<span>[target-next]</span> <code>✓ appended</code>`;
+                    streamContainer.appendChild(finalBadge);
+                    acceptedCount++;
+                }
+
+                tokensEl.textContent = `${acceptedCount} / forward pass`;
+                const speedup = acceptedCount / 1.0;
+                speedupEl.textContent = `${speedup.toFixed(2)}x`;
+            }
+
+            slider.addEventListener('input', () => {
+                threshVal.textContent = `${parseFloat(slider.value).toFixed(2)}`;
+            });
+
+            draftBtn.addEventListener('click', generateDraft);
+            verifyBtn.addEventListener('click', verifyDraft);
+
+            // Initial setup
+            generateDraft();
+        }
+
+        /* ==========================================================================
+           Widget 4: Distributed Parallelism Topology Matrix Selector Logic
+           ========================================================================== */
+        function initTopologyWidget() {
+            const tabs = document.querySelectorAll('.topology-tab');
+            const descEl = document.getElementById('topology-desc-text');
+            const svgLayers = document.querySelectorAll('.topology-node');
+            const svgLinks = document.querySelectorAll('.topology-link');
+
+            if (!tabs.length || !descEl) return;
+
+            const descriptions = {
+                'tp': "<strong>Tensor Parallelism (Intra-Node):</strong> Shards individual Linear layers across multiple GPUs using high-speed NVLink channels. Achieves extremely low latency for individual sequence decodes but introduces dense ALL-REDUCE synchronization barriers overhead.",
+                'pp': "<strong>Pipeline Parallelism (Inter-Node):</strong> Partitions sequential deep network layers vertically across standalone GPU host instances. Straightforward network isolation implementation, but requires optimal scheduling (1F1B) to minimize idle computation bubbles.",
+                'dp': "<strong>Data Parallelism (Replica):</strong> Replicates fully intact model parameters arrays across cluster nodes. Multiplies total incoming citizen request throughput bandwidth horizontally, but does not relieve high parameter VRAM memory pressure for massive base models.",
+                'hybrid': "<strong>Hybrid Model Parallelism (2D/3D Grid):</strong> Fuses intra-node Tensor Parallelism to contain memory bandwidth walls alongside inter-node Pipeline Parallelism to handle massive national-level models (e.g., Llama-3-405B) cleanly without degradation."
+            };
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    const target = tab.dataset.topo;
+                    descEl.innerHTML = descriptions[target] || descriptions['tp'];
+
+                    // Manipulate SVG nodes dynamically to illustrate interconnect behavior
+                    svgLayers.forEach(node => {
+                        if (target === 'tp') {
+                            node.setAttribute('fill', '#eff6ff');
+                            node.setAttribute('stroke', '#2563eb');
+                        } else if (target === 'pp') {
+                            node.setAttribute('fill', '#fef2f2');
+                            node.setAttribute('stroke', '#ef4444');
+                        } else if (target === 'dp') {
+                            node.setAttribute('fill', '#ecfdf5');
+                            node.setAttribute('stroke', '#10b981');
+                        } else {
+                            node.setAttribute('fill', '#f5f3ff');
+                            node.setAttribute('stroke', '#8b5cf6');
+                        }
+                    });
+
+                    svgLinks.forEach(link => {
+                        if (target === 'tp') {
+                            link.setAttribute('stroke', '#2563eb');
+                            link.setAttribute('stroke-dasharray', 'none');
+                        } else if (target === 'pp') {
+                            link.setAttribute('stroke', '#ef4444');
+                            link.setAttribute('stroke-dasharray', '4');
+                        } else {
+                            link.setAttribute('stroke', '#94a3b8');
+                            link.setAttribute('stroke-dasharray', '2');
+                        }
+                    });
+                });
+            });
+        }
+
+    </script>
+</body>
+
+</html>

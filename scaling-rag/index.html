@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Architecting High-Scale RAG Infrastructure</title>
+    <meta name="description"
+        content="A comprehensive engineering suite detailing foundational design pillars for national-scale Generative AI systems." />
+
+    <!-- Modern Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: "Inter", sans-serif;
+            line-height: 1.6;
+            padding: 4rem 1.5rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .portal-wrapper {
+            max-width: 840px;
+            margin: 0 auto;
+        }
+
+        .portal-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .portal-title {
+            font-family: "Outfit", sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+        }
+
+        .portal-subtitle {
+            font-size: 1.15rem;
+            color: #64748b;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pillars-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .pillars-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .pillar-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 2rem;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pillar-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #cbd5e1;
+            transition: background-color 0.25s ease;
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        /* Distinct pillar theme bands */
+        .pillar-card[data-theme="inference"]::before {
+            background-color: #f59e0b;
+        }
+
+        .pillar-card[data-theme="vector"]::before {
+            background-color: #0d9488;
+        }
+
+        .pillar-card[data-theme="topology"]::before {
+            background-color: #2563eb;
+        }
+
+        .pillar-card[data-theme="async"]::before {
+            background-color: #8b5cf6;
+        }
+
+        .pillar-num {
+            font-family: "Outfit", sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .pillar-title {
+            font-family: "Outfit", sans-serif;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.75rem;
+            line-height: 1.25;
+            transition: color 0.2s ease;
+        }
+
+        .pillar-card:hover .pillar-title {
+            color: #2563eb;
+        }
+
+        .pillar-card[data-theme="inference"]:hover .pillar-title {
+            color: #d97706;
+        }
+
+        .pillar-card[data-theme="vector"]:hover .pillar-title {
+            color: #0f766e;
+        }
+
+        .pillar-card[data-theme="async"]:hover .pillar-title {
+            color: #7c3aed;
+        }
+
+        .pillar-desc {
+            font-size: 0.95rem;
+            color: #64748b;
+            margin-bottom: 1.5rem;
+        }
+
+        .pillar-link-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #2563eb;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .pillar-card[data-theme="inference"] .pillar-link-label {
+            color: #d97706;
+        }
+
+        .pillar-card[data-theme="vector"] .pillar-link-label {
+            color: #0f766e;
+        }
+
+        .pillar-card[data-theme="async"] .pillar-link-label {
+            color: #7c3aed;
+        }
+
+        .pillar-link-label::after {
+            content: '→';
+            transition: transform 0.2s ease;
+        }
+
+        .pillar-card:hover .pillar-link-label::after {
+            transform: translateX(3px);
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="portal-wrapper">
+        <header class="portal-header">
+            <span class="badge">Technical Documentation Suite</span>
+            <h1 class="portal-title">Architecting High-Scale RAG Infrastructure</h1>
+            <p class="portal-subtitle">Synthesizing modern infrastructure concepts into functional, interactive
+                engineering guides equipped with executable distributed systems simulations.</p>
+        </header>
+
+        <main class="pillars-grid">
+            <!-- Article 1 -->
+            <a href="./inference_optimizations.html" class="pillar-card" data-theme="inference">
+                <div>
+                    <span class="pillar-num">PILLAR 01</span>
+                    <h2 class="pillar-title">Inference Optimizations</h2>
+                    <p class="pillar-desc">Explore model throughput bounds using continuous batching, speculative
+                        decoding drafts, FP8/AWQ precision quantization frameworks, and tensor/pipeline sharding
+                        strategies.</p>
+                </div>
+                <span class="pillar-link-label">Access Interactive Guide</span>
+            </a>
+
+            <!-- Article 2 -->
+            <a href="./vector_db_scalability.html" class="pillar-card" data-theme="vector">
+                <div>
+                    <span class="pillar-num">PILLAR 02</span>
+                    <h2 class="pillar-title">Vector DB Scalability</h2>
+                    <p class="pillar-desc">Deep-dive into indexing algorithms like HNSW vs. DiskANN, multi-stage hybrid
+                        filtering workflows, scalar/binary index compression arrays, and stateful multi-node
+                        replication.</p>
+                </div>
+                <span class="pillar-link-label">Access Interactive Guide</span>
+            </a>
+
+            <!-- Article 3 -->
+            <a href="./horizontal_topologies.html" class="pillar-card" data-theme="topology">
+                <div>
+                    <span class="pillar-num">PILLAR 03</span>
+                    <h2 class="pillar-title">Horizontal Topologies</h2>
+                    <p class="pillar-desc">Analyze cross-cluster governance mechanics featuring predictive
+                        Time-To-First-Token load balancers, KV-cache prefix trie consistent hashing, and multi-region
+                        traffic spilling.</p>
+                </div>
+                <span class="pillar-link-label">Access Interactive Guide</span>
+            </a>
+
+            <!-- Article 4 -->
+            <a href="./async_orchestration.html" class="pillar-card" data-theme="async">
+                <div>
+                    <span class="pillar-num">PILLAR 04</span>
+                    <h2 class="pillar-title">Asynchronous Orchestration</h2>
+                    <p class="pillar-desc">Bypass synchronous gateway timeouts via event-driven Kafka/RabbitMQ tracks,
+                        LangGraph session rehydration checkpoints, live nested SSE telemetry, and Firecracker microVMs.
+                    </p>
+                </div>
+                <span class="pillar-link-label">Access Interactive Guide</span>
+            </a>
+        </main>
+    </div>
+</body>
+
+</html>
