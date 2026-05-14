@@ -1,0 +1,42 @@
+name: Deploy Enterprise Notes Portal to GitHub Pages
+
+on:
+  # Trigger deployment on push to the main publishing branch
+  push:
+    branches: ["main"]
+  # Allow manual trigger from the GitHub Actions tab
+  workflow_dispatch:
+
+# Set directory permissions required for secure OpenID Connect token authentication
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent simultaneous redundant deployment executions
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: Configure GitHub Pages Hosting Environment
+        uses: actions/configure-pages@v5
+      
+      - name: Upload Static Portal Files Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Packages root index.html alongside scaling-rag category directory assets cleanly
+          path: '.'
+      
+      - name: Deploy Live Artifact Payload to Target Environment
+        id: deployment
+        uses: actions/deploy-pages@v4

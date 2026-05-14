@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Enterprise Engineering Architecture Notes</title>
+    <meta name="description"
+        content="Central technical notes portal indexing interactive infrastructure and software engineering guides." />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+        rel="stylesheet" />
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: "Inter", sans-serif;
+            line-height: 1.6;
+            padding: 4rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .portal-wrapper {
+            max-width: 840px;
+            margin: 0 auto;
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .portal-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background-color: #eff6ff;
+            color: #2563eb;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .portal-title {
+            font-family: "Outfit", sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+        }
+
+        .portal-subtitle {
+            font-size: 1.15rem;
+            color: #64748b;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-family: "Outfit", sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .categories-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .category-card {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 2.5rem;
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .category-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background-color: #2563eb;
+            transition: background-color 0.25s ease;
+        }
+
+        .category-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.08);
+            border-color: #cbd5e1;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .article-count {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-family: "Outfit", sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+        }
+
+        .card-status {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #10b981;
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .card-status::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .category-title {
+            font-family: "Outfit", sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            line-height: 1.25;
+            transition: color 0.2s ease;
+        }
+
+        .category-card:hover .category-title {
+            color: #2563eb;
+        }
+
+        .category-desc {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #2563eb;
+            padding-top: 1.5rem;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .card-footer::after {
+            content: '→';
+            transition: transform 0.2s ease;
+        }
+
+        .category-card:hover .card-footer::after {
+            transform: translateX(4px);
+        }
+
+        .footer {
+            margin-top: auto;
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="portal-wrapper">
+        <header class="portal-header">
+            <span class="badge">Knowledge Directory</span>
+            <h1 class="portal-title">Enterprise Engineering Notes</h1>
+            <p class="portal-subtitle">A central registry indexing interactive, single-page engineering infrastructure
+                architecture modules and localized execution simulators.</p>
+        </header>
+
+        <div class="section-label">Documentation Portals</div>
+
+        <main class="categories-grid">
+            <!-- Active Category -->
+            <a href="./scaling-rag/index.html" class="category-card">
+                <div>
+                    <div class="card-meta">
+                        <span class="article-count">4 Foundational Pillars</span>
+                        <span class="card-status">Active Suite</span>
+                    </div>
+                    <h2 class="category-title">Scaling RAG Infrastructure</h2>
+                    <p class="category-desc">Complete interactive engineering guides covering inference continuous
+                        batching tuning, dual-stage vector database indexing compression, predictive cache-aware routing
+                        topologies, and highly decoupled asynchronous task worker orchestration backplanes.</p>
+                </div>
+                <div class="card-footer">
+                    <span>Access Category Portal</span>
+                </div>
+            </a>
+        </main>
+
+        <footer class="footer">
+            Designed for high-fidelity technical onboarding. Features client-side zero-dependency operational simulation
+            tools.
+        </footer>
+    </div>
+</body>
+
+</html>
