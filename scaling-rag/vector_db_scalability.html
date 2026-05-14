@@ -689,6 +689,8 @@
                                 <ul>
                                     <li><a href="#hnsw-ivf-diskann">HNSW, IVF-PQ, and DiskANN Architecture Mechanics</a>
                                     </li>
+                                    <li><a href="#ivf-pq-deep-dive">Deep-Dive: Mechanics of Product Quantization &amp; IVF-PQ</a>
+                                    </li>
                                 </ul>
                             </li>
                             <li>
@@ -802,11 +804,11 @@
                 <h2>2. Core Indexing Philosophies: Graph vs. Clustering vs. Disk</h2>
                 <p>
                     Selecting an indexing algorithm dictates downstream operational costs and processing latency limits.
-                    Modern architectures utilize three highly distinct indexing philosophies depending on memory
+                    Modern architectures utilize four highly distinct indexing philosophies depending on memory
                     footprints and retrieval performance goals:
                 </p>
 
-                <h3 id="hnsw-ivf-diskann">HNSW, IVF-PQ, and DiskANN Architecture Mechanics</h3>
+                <h3 id="hnsw-ivf-diskann">HNSW, IVF, IVF-PQ, and DiskANN Architecture Mechanics</h3>
                 <ul>
                     <li>
                         <strong>HNSW (Hierarchical Navigable Small World):</strong> HNSW constructs a multi-layered
@@ -819,6 +821,13 @@
                         recall against compute speeds.
                     </li>
                     <li>
+                        <strong>IVF (IVFFlat):</strong> Establishes a foundational clustering structure by partitioning the vector space
+                        into Voronoi cells using a coarse quantizer without compressing the underlying coordinate arrays. While search query
+                        evaluations restrict distance computations strictly to the closest candidate cells to achieve faster query throughput
+                        than exhaustive scans, storing uncompressed floating-point vectors alongside document identifiers in physical memory
+                        preserves high baseline retrieval accuracy at a more compact footprint than dense graph topologies.
+                        </li>
+                        <li>
                         <strong>IVF-PQ (Inverted File + Product Quantization):</strong> For highly cost-sensitive
                         storage layers, IVF-PQ partitions collections into isolated cluster centroids (Inverted File
                         indexing) while quantizing internal sub-vectors into highly compact byte representations
@@ -834,6 +843,50 @@
                         compressed routing graph states inside active system RAM while reading absolute target vectors
                         off high-speed storage paths on-the-fly, DiskANN achieves acceptable RAG latencies (15ms–40ms)
                         while relieving high memory pressure entirely.
+                    </li>
+                </ul>
+
+                <h3 id="ivf-pq-deep-dive">Deep-Dive: Mechanics of Product Quantization &amp; IVF-PQ</h3>
+                <p>
+                    Achieving memory reduction past scalar limits requires decomposing the mathematical vector space. <strong>Product
+                        Quantization (PQ)</strong> maps high-dimensional vectors to highly compact byte sequences, while the
+                    <strong>Inverted File (IVF)</strong> structure partitions the global search space to prevent exhaustive linear
+                    traversal.
+                </p>
+                
+                <ul>
+                    <li>
+                        <strong>Orthogonal Space Decomposition:</strong> A dense vector space is split into <code
+                            style="font-family: var(--font-mono); font-size: 0.85rem;">m</code> independent sub-spaces. For example, a
+                        1536-dimensional floating-point vector decomposed with <code
+                            style="font-family: var(--font-mono); font-size: 0.85rem;">m = 192</code> creates 192 sub-vectors, each
+                        containing 8 individual features.
+                    </li>
+                    <li>
+                        <strong>Centroid Codebook Generation:</strong> Each sub-space undergoes independent <code
+                            style="font-family: var(--font-mono); font-size: 0.85rem;">k</code>-means clustering to establish localized
+                        centroids. Using 8 bits per sub-space (<code
+                            style="font-family: var(--font-mono); font-size: 0.85rem;">nbits = 8</code>) yields exactly 256 unique
+                        centroid coordinates per codebook.
+                    </li>
+                    <li>
+                        <strong>Byte Encoding Compression:</strong> Individual sub-vectors are mapped directly to their closest
+                        centroid's 1-byte index. The original 6,144-byte raw floating array collapses into a minimal 192-byte array of
+                        cluster indices, delivering a predictable <strong>32x physical space reduction</strong>.
+                    </li>
+                    <li>
+                        <strong>Asymmetric Distance Computation (ADC):</strong> During query execution, the input search vector remains
+                        in full uncompressed floating-point precision while stored documents remain as byte codes. The query sub-vectors
+                        compute exact inner products against the 256 codebook centroids once, storing outcomes in localized processor
+                        cache tables. Systemic database evaluations sum these cached table offsets instantly using hardware pointer
+                        additions, completely bypassing the need to reconstruct original vectors.
+                    </li>
+                    <li>
+                        <strong>Voronoi Cell Partitioning (IVF):</strong> An Inverted File index establishes <code
+                            style="font-family: var(--font-mono); font-size: 0.85rem;">nlist</code> coarse cluster boundaries across the
+                        entire global collection. Queries evaluate distances strictly against centroids to isolate the closest <code
+                            style="font-family: var(--font-mono); font-size: 0.85rem;">nprobe</code> regions. Searching inside targeted
+                        Voronoi cells reduces linear complexity evaluations down to a sub-linear evaluation flow.
                     </li>
                 </ul>
 
@@ -873,9 +926,31 @@
                                 <option value="hnsw" selected>HNSW Graph (Uncompressed Base / Max Latency Speed)
                                 </option>
                                 <option value="hnsw-sq8">HNSW + SQ8 Precision (Scalar Quantized Graph)</option>
+                                <option value="ivf-flat">IVF / IVFFlat (Uncompressed Centroid Clustering)</option>
                                 <option value="ivf-pq">IVF-PQ (Inverted File Clustering + Sub-vector Quantization)
                                 </option>
                                 <option value="diskann">DiskANN (Vamana SSD Indexing / Max RAM Efficiency)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="ivf-pq-params" class="widget-grid"
+                        style="display: none; background-color: var(--border-soft); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 1.25rem;">
+                        <div class="widget-field">
+                            <label for="ann-pq-m">PQ Sub-vectors (<span style="font-family: var(--font-mono);">m</span>)</label>
+                            <select id="ann-pq-m" class="widget-select">
+                                <option value="48">m = 48 (Max Compression / Lower Recall)</option>
+                                <option value="96">m = 96 (Balanced Memory Profile)</option>
+                                <option value="192" selected>m = 192 (Standard RAG Precision)</option>
+                            </select>
+                        </div>
+                        <div class="widget-field">
+                            <label for="ann-ivf-nlist">IVF Coarse Clusters (<span
+                                    style="font-family: var(--font-mono);">nlist</span>)</label>
+                            <select id="ann-ivf-nlist" class="widget-select">
+                                <option value="4096">4,096 Clusters</option>
+                                <option value="16384" selected>16,384 Clusters</option>
+                                <option value="65536">65,536 Clusters</option>
                             </select>
                         </div>
                     </div>
@@ -902,6 +977,10 @@
                             </div>
                         </div>
 
+                        <div id="ivf-pq-breakdown"
+                            style="display: none; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color); font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">
+                        </div>
+
                         <div class="capacity-tracker">
                             <div class="capacity-tracker-labels">
                                 <span>Single Host RAM Allocation Load vs. Standard 256GB Server Ceiling</span>
@@ -923,6 +1002,67 @@
                         alongside vector collection additions.
                     </p>
                 </div>
+<div class="callout" style="padding: 0; background-color: var(--widget-bg); border-left: 4px solid var(--info-color);">
+    <details style="padding: 1.25rem 1.5rem;">
+        <summary
+            style="cursor: pointer; font-weight: 700; color: var(--info-color); list-style: none; display: flex; justify-content: space-between; align-items: center;">
+            <span style="display: flex; align-items: center; gap: 0.5rem;">📐 Technical Reference: Memory &amp; Disk
+                Calculation Formulas</span>
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: normal;">Click to expand</span>
+        </summary>
+        <div
+            style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.9rem; line-height: 1.6; color: var(--text-main);">
+            <p style="margin-bottom: 0.75rem;">
+                Given <strong>N</strong> (Total Vectors), <strong>D</strong> (Dimensionality), and baseline <strong>Raw
+                    Size</strong> (<code style="font-size: 0.8rem;">N × D × 4 Bytes</code>), the sizing engine
+                implements deterministic hardware profile formulas:
+            </p>
+            <ul style="padding-left: 1.25rem; margin-bottom: 0;">
+                <li style="margin-bottom: 0.75rem;">
+                    <strong>HNSW Graph (Uncompressed):</strong>
+                    <br />• <strong>RAM Allocation:</strong> <code style="font-size: 0.8rem;">Raw Size × 1.25</code>
+                    (Maintains raw Float32 vector arrays in memory alongside multi-layer skip-graph link structures).
+                    <br />• <strong>Persistent Disk:</strong> <code style="font-size: 0.8rem;">0 GB</code> runtime read
+                    dependency.
+                </li>
+                <li style="margin-bottom: 0.75rem;">
+                    <strong>HNSW + SQ8 Precision:</strong>
+                    <br />• <strong>RAM Allocation:</strong> <code
+                        style="font-size: 0.8rem;">(Raw Size ÷ 4) × 1.35</code> (Mapping initial floating-point arrays
+                    to INT8 signed integers slashes coordinate volume by 4x, leaving structural pointer layers
+                    proportionally stable).
+                    <br />• <strong>Persistent Disk:</strong> <code style="font-size: 0.8rem;">0 GB</code> runtime read
+                    dependency.
+                </li>
+                <li style="margin-bottom: 0.75rem;">
+                    <strong>IVF (IVFFlat):</strong>
+                    <br />• <strong>RAM Allocation:</strong> <code
+                        style="font-size: 0.8rem;">Raw Size + Vector IDs (N × 8 Bytes) + IVF Centroids (nlist × D × 4 Bytes)</code>
+                    (Preserves complete uncompressed raw vectors inside cluster partition lists).
+                    <br />• <strong>Persistent Disk:</strong> <code style="font-size: 0.8rem;">0 GB</code> runtime read
+                    dependency.
+                </li>
+                <li style="margin-bottom: 0.75rem;">
+                    <strong>IVF-PQ Clustering:</strong>
+                    <br />• <strong>RAM Allocation:</strong> <code
+                        style="font-size: 0.8rem;">Compressed Codes (N × m Bytes) + Vector IDs (N × 8 Bytes) + Codebooks (256 × D × 4 Bytes) + IVF Centroids (nlist × D × 4 Bytes)</code>.
+                    Allocations map directly to the parameterized number of byte sub-vectors (<code
+                        style="font-size: 0.8rem;">m</code>).
+                    <br />• <strong>Persistent Disk:</strong> <code style="font-size: 0.8rem;">0 GB</code> runtime read
+                    dependency.
+                </li>
+                <li>
+                    <strong>DiskANN (Vamana Graph over SSD):</strong>
+                    <br />• <strong>RAM Allocation:</strong> <code style="font-size: 0.8rem;">Raw Size × 0.12</code>
+                    (Only highly compressed routing graph topology nodes remain cached inside volatile system memory).
+                    <br />• <strong>Persistent Disk:</strong> <code style="font-size: 0.8rem;">Raw Size × 1.35</code>
+                    (Preserves complete uncompressed vector arrays alongside complete persistent Vamana graph connection
+                    blocks read via direct asynchronous I/O paths).
+                </li>
+            </ul>
+        </div>
+    </details>
+</div>
             </section>
 
             <!-- SECTION 3 -->
@@ -1240,6 +1380,18 @@
                 // Base uncompressed Float32 raw storage size in GB
                 const baseRawGB = (count * dim * 4) / 1e9;
 
+                const ivfParamsEl = document.getElementById('ivf-pq-params');
+                const breakdownEl = document.getElementById('ivf-pq-breakdown');
+
+                if (ivfParamsEl) {
+                    ivfParamsEl.style.display = (algo === 'ivf-pq' || algo === 'ivf-flat') ? 'grid' : 'none';
+                    // Hide PQ sub-vector selector if IVF is chosen, since it does not apply
+                    const pqField = ivfParamsEl.querySelector('.widget-field');
+                    if (pqField) {
+                        pqField.style.display = algo === 'ivf-flat' ? 'none' : 'flex';
+                    }
+                }
+
                 let ramGB = 0;
                 let ssdGB = 0;
                 let latency = 0;
@@ -1251,6 +1403,7 @@
                     ssdGB = 0.0;
                     latency = count > 1e8 ? 6 : 3;
                     recall = 98.2;
+                    if (breakdownEl) breakdownEl.style.display = 'none';
                 } else if (algo === 'hnsw-sq8') {
                     // Scalar Quantized down to INT8 reduces vector data sizes by 4x
                     const compressedRawGB = baseRawGB / 4;
@@ -1258,18 +1411,62 @@
                     ssdGB = 0.0;
                     latency = count > 1e8 ? 4 : 2; // faster register inner-product evaluation
                     recall = 96.1;
-                } else if (algo === 'ivf-pq') {
-                    // Product Quantization shrinks vectors down to ~1/16th space
-                    ramGB = baseRawGB * 0.08;
+                    if (breakdownEl) breakdownEl.style.display = 'none';
+                } else if (algo === 'ivf-flat') {
+                    // IVF stores raw Float32 vectors + IDs + IVF coarse centroids
+                    const nlistSelect = document.getElementById('ann-ivf-nlist');
+                    const nlist = nlistSelect ? parseFloat(nlistSelect.value) : 16384;
+
+                    const rawVectorsGB = baseRawGB;
+                    const vectorIdsGB = (count * 8) / 1e9;
+                    const ivfCentroidsGB = (nlist * dim * 4) / 1e9;
+
+                    ramGB = rawVectorsGB + vectorIdsGB + ivfCentroidsGB;
                     ssdGB = 0.0;
-                    latency = count > 1e8 ? 32 : 18;
-                    recall = 89.5;
+                    latency = count > 1e8 ? 12 : 6;
+                    recall = 97.5;
+
+                    if (breakdownEl) {
+                        breakdownEl.style.display = 'block';
+                        breakdownEl.innerHTML = `<strong>IVF (IVFFlat) Precise RAM Breakdown:</strong> Uncompressed Raw Vectors: <strong>${rawVectorsGB.toFixed(2)} GB</strong> | Vector IDs (64-bit): <strong>${vectorIdsGB.toFixed(2)} GB</strong> | IVF Coarse Centroids: <strong>${(ivfCentroidsGB >= 1 ? ivfCentroidsGB.toFixed(2) + ' GB' : (ivfCentroidsGB * 1000).toFixed(1) + ' MB')}</strong>`;
+                    }
+                } else if (algo === 'ivf-pq') {
+                    // Precise IVF-PQ In-Memory calculation: Codes + IDs + Codebooks + Centroids
+                    const mSelect = document.getElementById('ann-pq-m');
+                    const nlistSelect = document.getElementById('ann-ivf-nlist');
+                    const m = mSelect ? parseFloat(mSelect.value) : 192;
+                    const nlist = nlistSelect ? parseFloat(nlistSelect.value) : 16384;
+
+                    const compressedVectorsGB = (count * m) / 1e9;
+                    const vectorIdsGB = (count * 8) / 1e9; // 64-bit document identifiers
+                    const codebooksGB = (256 * dim * 4) / 1e9; // 256 centroids per sub-space
+                    const ivfCentroidsGB = (nlist * dim * 4) / 1e9;
+
+                    ramGB = compressedVectorsGB + vectorIdsGB + codebooksGB + ivfCentroidsGB;
+                    ssdGB = 0.0;
+
+                    if (m === 48) {
+                        latency = count > 1e8 ? 15 : 8;
+                        recall = 82.5;
+                    } else if (m === 96) {
+                        latency = count > 1e8 ? 22 : 12;
+                        recall = 88.0;
+                    } else {
+                        latency = count > 1e8 ? 32 : 18;
+                        recall = 92.5;
+                    }
+
+                    if (breakdownEl) {
+                        breakdownEl.style.display = 'block';
+                        breakdownEl.innerHTML = `<strong>IVF-PQ Precise RAM Breakdown:</strong> Compressed Vector Codes: <strong>${compressedVectorsGB.toFixed(2)} GB</strong> | Vector IDs (64-bit): <strong>${vectorIdsGB.toFixed(2)} GB</strong> | PQ Centroid Codebooks: <strong>${(codebooksGB * 1000).toFixed(2)} MB</strong> | IVF Coarse Centroids: <strong>${(ivfCentroidsGB >= 1 ? ivfCentroidsGB.toFixed(2) + ' GB' : (ivfCentroidsGB * 1000).toFixed(1) + ' MB')}</strong>`;
+                    }
                 } else if (algo === 'diskann') {
                     // DiskANN preserves compressed Vamana graphs in RAM, pushes absolute vectors/SSD Graph directly to NVMe SSDs
                     ramGB = baseRawGB * 0.12;
                     ssdGB = baseRawGB * 1.35;
                     latency = count > 1e8 ? 24 : 14;
                     recall = 95.4;
+                    if (breakdownEl) breakdownEl.style.display = 'none';
                 }
 
                 ramEl.textContent = `${ramGB >= 1000 ? (ramGB / 1000).toFixed(2) + ' TB' : ramGB.toFixed(1) + ' GB'}`;
@@ -1297,6 +1494,10 @@
             countSelect.addEventListener('change', recalculate);
             dimSelect.addEventListener('change', recalculate);
             algoSelect.addEventListener('change', recalculate);
+            const mSel = document.getElementById('ann-pq-m');
+            const nlistSel = document.getElementById('ann-ivf-nlist');
+            if (mSel) mSel.addEventListener('change', recalculate);
+            if (nlistSel) nlistSel.addEventListener('change', recalculate);
 
             recalculate();
         }
