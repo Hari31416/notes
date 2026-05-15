@@ -16,3 +16,4 @@ A collection of interactive notes and simulations on engineering and infrastruct
 ### [Core Concepts](https://hari31416.github.io/notes/concepts/index.html)
 - [BM25 Search & Sparse Vectors](https://hari31416.github.io/notes/concepts/bm25_sparse_vectors.html)
 - [ANN Vector Search Internals](https://hari31416.github.io/notes/concepts/ann-vector-search.html)
+- [The Serverless Paradigm](https://hari31416.github.io/notes/concepts/serverless.html)
