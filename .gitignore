@@ -1,2 +1,17 @@
 /temporary/
 .DS_Store
+.agents
+skills-lock.json
+
+# Manim
+media/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+.env/
+/animations/manim

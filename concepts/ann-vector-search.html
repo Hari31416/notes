@@ -390,7 +390,7 @@
                 --accent-hover: #60a5fa;
                 --accent-light: rgba(59, 130, 246, 0.15);
                 --code-bg: #020617;
-                
+
                 /* Component light backgrounds in dark mode */
                 --success-light: rgba(16, 185, 129, 0.15);
                 --danger-light: rgba(239, 68, 68, 0.15);
@@ -414,13 +414,41 @@
             }
 
             /* Global Component Overrides for Dark Mode */
-            .widget-container, .doc-score-item, .term-chip, .metric-card, .widget-header, .doc-item-header, .simulator-widget, .widget-card, .panel-box, .queue-item, .btn, .metric-box, .widget-select, .widget-input, .capacity-bar-wrapper, .metric-box, .quiz-container, .flashcard, .stepper-item, .primitive-control {
+            .widget-container,
+            .doc-score-item,
+            .term-chip,
+            .metric-card,
+            .widget-header,
+            .doc-item-header,
+            .simulator-widget,
+            .widget-card,
+            .panel-box,
+            .queue-item,
+            .btn,
+            .metric-box,
+            .widget-select,
+            .widget-input,
+            .capacity-bar-wrapper,
+            .metric-box,
+            .quiz-container,
+            .flashcard,
+            .stepper-item,
+            .primitive-control {
                 background-color: #111827 !important;
                 border-color: #374151 !important;
                 color: inherit !important;
             }
-            
-            .widget-visualization, .vector-display-panel, .array-cell, .breakdown-formula, .log-container, .widget-display-panel, .capacity-bar-wrapper, .sse-console, .quiz-option, .stepper-content {
+
+            .widget-visualization,
+            .vector-display-panel,
+            .array-cell,
+            .breakdown-formula,
+            .log-container,
+            .widget-display-panel,
+            .capacity-bar-wrapper,
+            .sse-console,
+            .quiz-option,
+            .stepper-content {
                 background-color: #030712 !important;
                 border-color: #1f2937 !important;
             }
@@ -432,9 +460,11 @@
             }
 
             /* Fix for SVG icons */
-            svg rect[fill="#ffffff"], svg rect[fill="#f8fafc"] {
+            svg rect[fill="#ffffff"],
+            svg rect[fill="#f8fafc"] {
                 fill: #111827;
             }
+
             svg text[fill="#0f172a"] {
                 fill: #f1f5f9;
             }
@@ -654,6 +684,15 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
+        }
+
+        .algo-video {
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 4px rgb(0 0 0 / 0.1);
+            margin: 1.5rem 0;
+            height: auto;
+            width: 100%;
         }
 
         .quiz-retry-btn:hover {
@@ -1434,6 +1473,11 @@
                     </li>
                 </ol>
 
+                <video controls autoplay muted loop class="algo-video" aria-label="HNSW search animation">
+                    <source src="./assets/HNSWZoomSearch.mp4" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+
                 <p>
                     <strong>efSearch</strong> directly controls the speed-recall tradeoff at query time. Adjust
                     it below to see the effect on latency and recall:
@@ -1478,7 +1522,8 @@
                             </div>
                             <pre><code>recall = min(99.8, 60 + 32 × log(efSearch / 10) / log(512 / 10))</code></pre>
                         </div>
-                        <p><strong>Latency</strong> — each additional candidate adds a fixed per-node evaluation cost
+                        <p><strong>Latency</strong> — each additional candidate adds a fixed per-node evaluation
+                            cost
                             (edge traversal + distance computation). Modelled as linear:</p>
                         <div class="code-container" style="margin:0.75rem 0">
                             <div class="code-header">
@@ -1486,7 +1531,8 @@
                             </div>
                             <pre><code>latency_ms = 0.4 + efSearch × 0.028</code></pre>
                         </div>
-                        <p><strong>Nodes Evaluated</strong> — each candidate causes ~6 neighbor expansions on average
+                        <p><strong>Nodes Evaluated</strong> — each candidate causes ~6 neighbor expansions on
+                            average
                             for a typical M=16 graph:</p>
                         <div class="code-container" style="margin:0.75rem 0">
                             <div class="code-header">
@@ -1494,7 +1540,8 @@
                             </div>
                             <pre><code>nodes_evaluated ≈ efSearch × 6.2</code></pre>
                         </div>
-                        <p style="margin:0">All values are illustrative approximations for a 1M-vector, 768-dim index
+                        <p style="margin:0">All values are illustrative approximations for a 1M-vector, 768-dim
+                            index
                             with M=16, efConstruction=128 on commodity hardware. Actual numbers vary by dataset,
                             hardware, and HNSW implementation.</p>
                     </div>
@@ -1503,7 +1550,8 @@
                 <div class="callout">
 
                     <p><strong>efSearch must be ≥ k.</strong> If you request k=10 nearest neighbors, efSearch
-                        must be at least 10. Setting it lower produces undefined behavior in most implementations.</p>
+                        must be at least 10. Setting it lower produces undefined behavior in most implementations.
+                    </p>
                 </div>
             </section>
 
