@@ -120,6 +120,10 @@
             background-color: #2563eb;
         }
 
+        .pillar-card[data-theme="serverless"]::before {
+            background-color: #8b5cf6;
+        }
+
         .pillar-num {
             font-family: "Outfit", sans-serif;
             font-size: 0.85rem;
@@ -145,6 +149,10 @@
 
         .pillar-card[data-theme="bm25"]:hover .pillar-title {
             color: #1d4ed8;
+        }
+
+        .pillar-card[data-theme="serverless"]:hover .pillar-title {
+            color: #7c3aed;
         }
 
         .pillar-desc {
@@ -251,6 +259,16 @@
                     <p class="pillar-desc">Deep dive into HNSW, IVF, and Product Quantization algorithms powering modern
                         vector
                         databases and RAG pipelines.</p>
+                </div>
+                <span class="pillar-link-label">View Note</span>
+            </a>
+            <!-- Article 3 -->
+            <a href="./serverless.html" class="pillar-card" data-theme="serverless">
+                <div>
+                    <span class="pillar-num">03</span>
+                    <h2 class="pillar-title">The Serverless Paradigm</h2>
+                    <p class="pillar-desc">Explore event-driven execution mechanics, infrastructure abstractions, and the economics
+                        of scale in modern cloud architecture.</p>
                 </div>
                 <span class="pillar-link-label">View Note</span>
             </a>
