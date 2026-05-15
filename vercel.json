@@ -1,5 +1,15 @@
 {
     "version": 2,
     "cleanUrls": true,
-    "trailingSlash": false
+    "trailingSlash": false,
+    "builds": [
+        {
+            "src": "**/*.html",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "**/assets/**",
+            "use": "@vercel/static"
+        }
+    ]
 }
