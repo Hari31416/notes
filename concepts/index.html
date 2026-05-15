@@ -5,8 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Core Engineering Concepts</title>
-    <meta name="description"
-        content="Interactive notes on core engineering concepts and algorithms." />
+    <meta name="description" content="Interactive notes on core engineering concepts and algorithms." />
 
     <!-- Modern Premium Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -184,6 +183,43 @@
             font-size: 0.85rem;
             color: #94a3b8;
         }
+
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0f172a;
+                color: #cbd5e1;
+            }
+
+            .portal-title,
+            .pillar-title {
+                color: #f1f5f9;
+            }
+
+            .portal-subtitle,
+            .pillar-desc {
+                color: #94a3b8;
+            }
+
+            .pillar-card {
+                background-color: #1e293b;
+                border-color: #334155;
+            }
+
+            .pillar-card:hover {
+                border-color: #475569;
+                box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.4);
+            }
+
+            .badge {
+                background-color: #1e3a5f;
+                color: #3b82f6;
+            }
+
+            .footer-note {
+                border-top-color: #334155;
+            }
+        }
     </style>
 </head>
 
@@ -201,8 +237,20 @@
                 <div>
                     <span class="pillar-num">01</span>
                     <h2 class="pillar-title">BM25 Search & Sparse Vectors</h2>
-                    <p class="pillar-desc">Master discrete lexical retrieval mechanics via term saturation, document length normalization,
+                    <p class="pillar-desc">Master discrete lexical retrieval mechanics via term saturation, document
+                        length normalization,
                         and high-speed sparse matrix dot products.</p>
+                </div>
+                <span class="pillar-link-label">View Note</span>
+            </a>
+            <!-- Article 2 -->
+            <a href="./ann-vector-search.html" class="pillar-card" data-theme="vector-search">
+                <div>
+                    <span class="pillar-num">02</span>
+                    <h2 class="pillar-title">ANN Vector Search Internals</h2>
+                    <p class="pillar-desc">Deep dive into HNSW, IVF, and Product Quantization algorithms powering modern
+                        vector
+                        databases and RAG pipelines.</p>
                 </div>
                 <span class="pillar-link-label">View Note</span>
             </a>

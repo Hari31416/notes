@@ -212,6 +212,46 @@
             font-size: 0.85rem;
             color: #94a3b8;
         }
+
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0f172a;
+                color: #cbd5e1;
+            }
+            .portal-title, .category-title {
+                color: #f1f5f9;
+            }
+            .portal-subtitle, .category-desc {
+                color: #94a3b8;
+            }
+            .category-card {
+                background-color: #1e293b;
+                border-color: #334155;
+            }
+            .category-card:hover {
+                border-color: #475569;
+                box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.4);
+            }
+            .category-card::before {
+                background-color: #3b82f6;
+            }
+            .badge {
+                background-color: #1e3a5f;
+                color: #3b82f6;
+            }
+            .article-count {
+                background-color: #1e293b;
+                color: #94a3b8;
+                border: 1px solid #334155;
+            }
+            .footer {
+                border-top-color: #334155;
+            }
+            .card-footer {
+                border-top-color: #334155;
+            }
+        }
     </style>
 </head>
 
@@ -258,7 +298,7 @@
             <a href="./concepts/index.html" class="category-card">
                 <div>
                     <div class="card-meta">
-                        <span class="article-count">1 Note</span>
+                        <span class="article-count">2 Notes</span>
                     </div>
                     <h2 class="category-title">Core Engineering Concepts</h2>
                     <p class="category-desc">Foundational mechanics and interactive walkthroughs for search algorithms and vector storage.

@@ -340,6 +340,61 @@
       color: var(--text-heading);
       background-color: #f8fafc;
     }
+
+    /* Dark mode — base overrides only */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-body: #0f172a;
+        --text-main: #cbd5e1;
+        --text-heading: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border-color: #334155;
+        --border-soft: #1e293b;
+        --accent-color: #3b82f6;
+        --accent-hover: #60a5fa;
+        --accent-light: rgba(59, 130, 246, 0.15);
+        --code-bg: #020617;
+        
+        /* Component light backgrounds in dark mode */
+        --success-light: rgba(16, 185, 129, 0.15);
+        --danger-light: rgba(239, 68, 68, 0.15);
+        --warning-light: rgba(245, 158, 11, 0.15);
+        --info-light: rgba(14, 165, 233, 0.15);
+        --widget-bg: #111827;
+        --bubble-color: #1f2937;
+      }
+
+      .code-header {
+        background-color: #1e293b;
+      }
+
+      th {
+        background-color: #1e293b;
+      }
+
+      ::selection {
+        background-color: rgba(59, 130, 246, 0.35);
+        color: #f1f5f9;
+      }
+
+      /* Global Component Overrides for Dark Mode */
+      .widget-container, .doc-score-item, .term-chip, .metric-card, .widget-header, .doc-item-header, .simulator-widget, .widget-card, .panel-box, .queue-item, .btn, .metric-box, .widget-select, .widget-input, .capacity-bar-wrapper, .metric-box {
+        background-color: #111827 !important;
+        border-color: #374151 !important;
+        color: inherit !important;
+      }
+      
+      .widget-visualization, .vector-display-panel, .array-cell, .breakdown-formula, .log-container, .widget-display-panel, .capacity-bar-wrapper, .sse-console {
+        background-color: #030712 !important;
+        border-color: #1f2937 !important;
+      }
+
+      /* Override problematic inline backgrounds */
+      .callout {
+        background-color: var(--accent-light) !important;
+        border-left: 4px solid var(--accent-color) !important;
+      }
+    }
   </style>
   <style>
     /* Article-Specific Fully Functional Interactive Simulator Component Styles */

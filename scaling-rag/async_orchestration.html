@@ -608,6 +608,61 @@ th {
 
 
 
+    /* Dark mode — base overrides only */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --bg-body: #0f172a;
+            --text-main: #cbd5e1;
+            --text-heading: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --border-soft: #1e293b;
+            --accent-color: #3b82f6;
+            --accent-hover: #60a5fa;
+            --accent-light: rgba(59, 130, 246, 0.15);
+            --code-bg: #020617;
+            
+            /* Component light backgrounds in dark mode */
+            --success-light: rgba(16, 185, 129, 0.15);
+            --danger-light: rgba(239, 68, 68, 0.15);
+            --warning-light: rgba(245, 158, 11, 0.15);
+            --info-light: rgba(14, 165, 233, 0.15);
+            --widget-bg: #111827;
+            --bubble-color: #1f2937;
+        }
+
+        .code-header {
+            background-color: #1e293b;
+        }
+
+        th {
+            background-color: #1e293b;
+        }
+
+        ::selection {
+            background-color: rgba(59, 130, 246, 0.35);
+            color: #f1f5f9;
+        }
+
+        /* Global Component Overrides for Dark Mode */
+        .widget-container, .doc-score-item, .term-chip, .metric-card, .widget-header, .doc-item-header, .simulator-widget, .widget-card, .panel-box, .queue-item, .btn, .metric-box, .widget-select, .widget-input, .capacity-bar-wrapper, .metric-box, .step-circle {
+            background-color: #111827 !important;
+            border-color: #374151 !important;
+            color: inherit !important;
+        }
+        
+        .widget-visualization, .vector-display-panel, .array-cell, .breakdown-formula, .log-container, .widget-display-panel, .capacity-bar-wrapper, .sse-console, .storage-bucket, pre[id], code[id] {
+            background-color: #030712 !important;
+            border-color: #1f2937 !important;
+            color: #e2e8f0 !important;
+        }
+
+        /* Override problematic inline backgrounds */
+        .callout {
+            background-color: var(--accent-light) !important;
+            border-color: var(--accent-color) !important;
+        }
+    }
 </style>
 </head>
 
@@ -795,7 +850,7 @@ th {
                             <span style="font-weight: 700; display: block; margin-bottom: 0.25rem;">Redis Storage
                                 Payload: thread:agent_session_992:checkpoint</span>
                             <pre id="rehydrate-bucket"
-                                style="text-align: left; background-color: #ffffff; border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 4px; margin: 0; font-size: 0.75rem;">--</pre>
+                                style="text-align: left; border: 1px solid #e2e8f0; padding: 0.5rem; border-radius: 4px; margin: 0; font-size: 0.75rem;">--</pre>
                         </div>
                     </div>
                 </div>

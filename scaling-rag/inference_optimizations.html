@@ -352,6 +352,90 @@
             background-color: #f8fafc;
         }
 
+        /* Dark mode — base overrides only */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0f172a;
+                --text-main: #cbd5e1;
+                --text-heading: #f1f5f9;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --border-soft: #1e293b;
+                --accent-color: #3b82f6;
+                --accent-hover: #60a5fa;
+                --accent-light: rgba(59, 130, 246, 0.15);
+                --code-bg: #020617;
+                
+                /* Component light backgrounds in dark mode */
+                --success-light: rgba(16, 185, 129, 0.15);
+                --danger-light: rgba(239, 68, 68, 0.15);
+                --warning-light: rgba(245, 158, 11, 0.15);
+                --info-light: rgba(14, 165, 233, 0.15);
+                --widget-bg: #111827;
+                --bubble-color: #1f2937;
+            }
+
+            .code-header {
+                background-color: #1e293b;
+            }
+
+            th {
+                background-color: #1e293b;
+            }
+
+            ::selection {
+                background-color: rgba(59, 130, 246, 0.35);
+                color: #f1f5f9;
+            }
+
+            /* Global Component Overrides for Dark Mode */
+            .widget-container, .doc-score-item, .term-chip, .metric-card, .widget-header, .doc-item-header, .simulator-widget, .widget-card, .panel-box, .queue-item, .btn, .metric-box, .widget-select, .widget-input, .capacity-bar-wrapper, .metric-box {
+                background-color: #111827 !important;
+                border-color: #374151 !important;
+                color: inherit !important;
+            }
+            
+            .widget-visualization, .vector-display-panel, .array-cell, .breakdown-formula, .log-container, .widget-display-panel, .capacity-bar-wrapper, .sse-console {
+                background-color: #030712 !important;
+                border-color: #1f2937 !important;
+            }
+
+            /* Override problematic inline backgrounds */
+            .callout {
+                background-color: var(--accent-light) !important;
+                border-color: var(--accent-color) !important;
+            }
+
+            /* Specific alert overrides */
+            .capacity-status-alert.oom {
+                background-color: var(--danger-light) !important;
+                color: #fca5a5 !important;
+                border-color: rgba(239, 68, 68, 0.3) !important;
+            }
+            .capacity-status-alert.ok {
+                background-color: var(--success-light) !important;
+                color: #a7f3d0 !important;
+                border-color: rgba(16, 185, 129, 0.3) !important;
+            }
+            
+            /* Metric box specifically for inference optimizations */
+            .metric-box {
+                background-color: #111827 !important;
+                border-color: #374151 !important;
+            }
+            .metric-val {
+                color: var(--accent-color) !important;
+            }
+
+            /* Fix for SVG icons if needed */
+            svg rect[fill="#ffffff"], svg rect[fill="#f8fafc"] {
+                fill: #111827;
+            }
+            svg text[fill="#0f172a"] {
+                fill: #f1f5f9;
+            }
+        }
+
         /* ==========================================================================
    Custom Interactive Widget Component Styles
    ========================================================================== */
@@ -805,7 +889,7 @@
 
                 <figure>
                     <svg viewBox="0 0 760 220" width="100%" height="auto"
-                        style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        style="border: 1px solid #e2e8f0; border-radius: 8px;">
                         <defs>
                             <linearGradient id="gradCompute" x1="0%" y1="0%" x2="100%" y2="0%">
                                 <stop offset="0%" stop-color="#3b82f6" />
@@ -1198,7 +1282,7 @@
 
 
 
-                <div class="callout" style="border-color: var(--warning-color); background-color: #fffbeb;">
+                <div class="callout" style="border-color: var(--warning-color);">
                     <p>
                         <strong>Architectural Tradeoff:</strong> Implementing pure Pipeline Parallelism is technically
                         straightforward but introduces unavoidable fill/drain execution bubbles. For hyperscale serving,

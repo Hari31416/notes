@@ -212,6 +212,35 @@
             font-size: 0.85rem;
             color: #94a3b8;
         }
+
+        /* Dark Mode */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: #0f172a;
+                color: #cbd5e1;
+            }
+            .portal-title, .pillar-title {
+                color: #f1f5f9;
+            }
+            .portal-subtitle, .pillar-desc {
+                color: #94a3b8;
+            }
+            .pillar-card {
+                background-color: #1e293b;
+                border-color: #334155;
+            }
+            .pillar-card:hover {
+                border-color: #475569;
+                box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.4);
+            }
+            .badge {
+                background-color: #1e3a5f;
+                color: #3b82f6;
+            }
+            .footer-note {
+                border-top-color: #334155;
+            }
+        }
     </style>
 </head>
 
