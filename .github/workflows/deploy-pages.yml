@@ -1,4 +1,4 @@
-name: Deploy Enterprise Notes Portal to GitHub Pages
+name: Deploy Notes to GitHub Pages
 
 on:
   # Trigger deployment on push to the main publishing branch
