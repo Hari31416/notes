@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evaluative Mechanics: Demystifying Retrieval Metrics for RAG</title>
+    <meta name="description"
+        content="An engineering guide to RAG retrieval evaluation metrics: Precision, Recall, Hit Rate, MRR, MAP, and NDCG with an interactive simulator." />
+
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=Fira+Code:wght@400;500&display=swap"
+        rel="stylesheet" />
+
+    <!-- MathJax Setup -->
+    <script>
+        window.MathJax = {
+            tex: { inlineMath: [["\\(", "\\)"]], displayMath: [["\\[", "\\]"]] },
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" async></script>
+
+    <style>
+        /* Inlined from ./base.css */
+        /* Clean Minimalist Standalone Article Base Stylesheet */
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg-body: #ffffff;
+            --text-main: #1e293b;
+            --text-heading: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --border-soft: #f1f5f9;
+            --accent-color: #2563eb;
+            --accent-hover: #1d4ed8;
+            --accent-light: #eff6ff;
+            --code-bg: #0f172a;
+            --code-text: #f8fafc;
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-heading: "Outfit", sans-serif;
+            --font-mono: "Fira Code", monospace;
+        }
+
+        ::selection {
+            background-color: #bfdbfe;
+            color: #1e3a8a;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.75;
+            font-size: 1.05rem;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .layout-wrapper {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 4rem 1.5rem 2rem 1.5rem;
+        }
+
+        .article-content {
+            width: 100%;
+        }
+
+        .article-header {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .article-title {
+            font-family: var(--font-heading);
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-heading);
+            line-height: 1.2;
+        }
+
+        /* Table of Contents */
+        .table-of-contents {
+            background-color: var(--border-soft);
+            border-radius: 8px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 2.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .toc-details summary {
+            cursor: pointer;
+            list-style: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .toc-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .toc-details h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: var(--text-heading);
+        }
+
+        .toc-toggle-icon {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transition: transform 0.2s ease;
+        }
+
+        .toc-details[open] .toc-toggle-icon {
+            transform: rotate(180deg);
+        }
+
+        .toc-content {
+            margin-top: 1rem;
+            padding-top: 0.75rem;
+        }
+
+        .table-of-contents ul {
+            list-style-type: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+
+        .table-of-contents ul ul {
+            padding-left: 1.25rem;
+            margin-top: 0.25rem;
+            margin-bottom: 0.25rem;
+            border-left: 1px solid #cbd5e1;
+        }
+
+        .table-of-contents li {
+            margin-bottom: 0.4rem;
+            line-height: 1.4;
+        }
+
+        .table-of-contents a {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .table-of-contents ul ul a {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        .table-of-contents a:hover {
+            text-decoration: underline;
+            color: var(--accent-hover);
+        }
+
+        /* Article Body Formatting — scoped to avoid widget bleed-through */
+        .article-content h2 {
+            font-family: var(--font-heading);
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-heading);
+            margin: 3rem 0 1.25rem 0;
+            line-height: 1.3;
+        }
+
+        .article-content h3 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            margin: 2rem 0 1rem 0;
+        }
+
+        /* Reset article heading margins inside widget containers */
+        .stepper-step h3,
+        .quiz-container h3,
+        .flashcard h3 {
+            margin: 0 0 0.75rem 0;
+            font-size: 1.05rem;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+        }
+
+        strong {
+            color: var(--text-heading);
+            font-weight: 600;
+        }
+
+        ul,
+        ol {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Figures & Images */
+        figure {
+            margin: 2.5rem 0;
+        }
+
+        figure img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            display: block;
+        }
+
+        figcaption {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.4;
+        }
+
+        /* Callouts */
+        .callout {
+            background-color: var(--accent-light);
+            border-left: 4px solid var(--accent-color);
+            padding: 1.25rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        .callout p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Code Blocks */
+        .code-container {
+            margin: 2rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+        }
+
+        .code-header {
+            background-color: #1e293b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid #334155;
+        }
+
+        .code-label {
+            color: #94a3b8;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+        }
+
+        .copy-btn {
+            background-color: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            padding: 0.15rem 0.5rem;
+            font-family: var(--font-sans);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .copy-btn:hover {
+            background-color: #334155;
+            color: #f8fafc;
+        }
+
+        pre {
+            padding: 1.25rem 1rem;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: var(--code-text);
+        }
+
+        code {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            background-color: #f1f5f9;
+            padding: 0.15rem 0.35rem;
+            border-radius: 4px;
+            color: #0f172a;
+        }
+
+        pre code {
+            background-color: transparent;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* Keyword Highlights */
+        .kw {
+            color: #c084fc;
+            font-weight: 500;
+        }
+
+        .fn {
+            color: #38bdf8;
+        }
+
+        .st {
+            color: #a5d6ff;
+        }
+
+        .cm {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .dc {
+            color: #34d399;
+        }
+
+        .pr {
+            color: #f472b6;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        th,
+        td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            color: var(--text-heading);
+            background-color: #f8fafc;
+        }
+
+        /* Shared keyframes — used by multiple components */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Dark mode — base overrides only */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-body: #0f172a;
+                --text-main: #cbd5e1;
+                --text-heading: #f1f5f9;
+                --text-muted: #94a3b8;
+                --border-color: #334155;
+                --border-soft: #1e293b;
+                --accent-color: #3b82f6;
+                --accent-hover: #60a5fa;
+                --accent-light: #1e3a5f;
+                --code-bg: #020617;
+            }
+
+            .code-header {
+                background-color: #1e293b;
+            }
+
+            th {
+                background-color: #1e293b;
+            }
+
+            ::selection {
+                background-color: rgba(59, 130, 246, 0.35);
+                color: #f1f5f9;
+            }
+        }
+    </style>
+    <style>
+        /* Inlined from ./components/quiz.css */
+        /* Quiz / knowledge-check component styles */
+
+        .quiz-container {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2.5rem 0;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+        }
+
+        .quiz-question {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--text-heading);
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .quiz-option {
+            padding: 1rem 1.25rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-body);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .quiz-option:hover:not(.is-disabled) {
+            border-color: var(--accent-color);
+            background: var(--accent-light);
+        }
+
+        .quiz-option.is-selected {
+            border-color: var(--accent-color);
+            background: var(--accent-light);
+            font-weight: 600;
+        }
+
+        .quiz-option.is-correct {
+            border-color: #10b981;
+            background: #ecfdf5;
+            color: #065f46;
+        }
+
+        .quiz-option.is-incorrect {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .quiz-feedback {
+            margin-top: 1.5rem;
+            padding: 1.25rem 1.5rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            display: none;
+            border: 1px solid var(--border-color);
+            background: var(--border-soft);
+        }
+
+        .quiz-feedback.is-visible {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .quiz-feedback.is-correct {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .quiz-feedback.is-incorrect {
+            border-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .quiz-feedback [data-feedback] {
+            display: none !important;
+        }
+
+        .quiz-feedback.is-visible [data-feedback].is-active {
+            display: block !important;
+        }
+
+        /* Shake animation for wrong answers */
+        .quiz-container.shake {
+            animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        .quiz-retry-btn {
+            display: block;
+            margin-top: 1rem;
+            padding: 0.5rem 1.25rem;
+            background: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .quiz-retry-btn:hover {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            .quiz-container {
+                background: #1e293b;
+            }
+
+            .quiz-option {
+                background: #1e293b;
+            }
+
+            .quiz-option.is-correct {
+                background: #052e16;
+                border-color: #10b981;
+                color: #6ee7b7;
+            }
+
+            .quiz-option.is-incorrect {
+                background: #3b0000;
+                border-color: #ef4444;
+                color: #fca5a5;
+            }
+
+            .quiz-feedback {
+                background: #1e293b;
+            }
+
+            .quiz-feedback.is-correct {
+                background: #052e16;
+                border-color: #10b981;
+            }
+
+            .quiz-feedback.is-incorrect {
+                background: #3b0000;
+                border-color: #ef4444;
+            }
+        }
+    </style>
+    <style>
+        /* Inlined from ./components/stepper.css */
+        /* Stepper component styles */
+
+        .stepper {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            margin: 2.5rem 0;
+            overflow: hidden;
+        }
+
+        .stepper-header {
+            display: flex;
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            gap: 0.5rem;
+        }
+
+        .stepper-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stepper-dot.is-active {
+            background: var(--accent-color);
+            transform: scale(1.2);
+        }
+
+        .stepper-content-wrapper {
+            position: relative;
+            min-height: 200px;
+        }
+
+        .stepper-step {
+            padding: 2rem;
+            display: none;
+        }
+
+        .stepper-step.is-active {
+            display: block;
+            animation: slideIn 0.4s ease;
+        }
+
+        .stepper-controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            background: white;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .stepper-counter {
+            margin-left: auto;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            align-self: center;
+        }
+
+        .stepper-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .stepper-btn:hover:not(:disabled) {
+            background: var(--border-soft);
+        }
+
+        .stepper-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            .stepper {
+                background: #0f172a;
+            }
+
+            .stepper-header,
+            .stepper-controls {
+                background: #1e293b;
+            }
+        }
+    </style>
+    <style>
+        /* Inlined from ./components/comparison-tabs.css */
+        /* Comparison tabs (text/code before-after) component styles */
+
+        .comparison-tabs {
+            margin: 2.5rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .comparison-tab-headers {
+            display: flex;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-tab-btn {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: var(--font-sans);
+        }
+
+        .comparison-tab-btn.is-active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+            background: white;
+        }
+
+        .comparison-tab-btn:hover:not(.is-active) {
+            color: var(--text-heading);
+            background: var(--border-soft);
+        }
+
+        .comparison-tab-panel {
+            display: none;
+            padding: 1.5rem;
+        }
+
+        .comparison-tab-panel.is-active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .comparison-tab-panel .code-container {
+            margin: 0;
+        }
+
+        /* Dark mode */
+        @media (prefers-color-scheme: dark) {
+            .comparison-tab-headers {
+                background: #1e293b;
+            }
+
+            .comparison-tab-btn.is-active {
+                background: #0f172a;
+            }
+
+            .comparison-tab-panel {
+                background: #0f172a;
+            }
+        }
+    </style>
+    <style>
+        /* Inlined from ./components/primitives.css */
+        /* Primitives component styles — range sliders and explorable explanations */
+
+        .primitive-control-group {
+            background: var(--border-soft);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+
+        .primitive-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .primitive-control:last-child {
+            margin-bottom: 0;
+        }
+
+        .primitive-label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .primitive-value {
+            color: var(--accent-color);
+            font-family: var(--font-mono);
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: var(--border-color);
+            border-radius: 3px;
+            appearance: none;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--accent-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+    </style>
+
+    <style>
+        /* Simulator Custom Styles */
+        .simulator-card {
+            background-color: var(--border-soft);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2.5rem 0;
+        }
+
+        .simulator-header h3 {
+            margin: 0 0 0.5rem 0 !important;
+            font-size: 1.35rem !important;
+            font-weight: 700 !important;
+        }
+
+        .simulator-header p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .simulator-controls {
+            margin-bottom: 1.5rem;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        .primitive-control {
+            flex: 1 1 180px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .primitive-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-heading);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .primitive-value {
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .paradigm-toggle {
+            display: flex;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            height: 34px;
+        }
+
+        .paradigm-btn {
+            flex: 1;
+            background: var(--bg-body);
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            font-family: var(--font-sans);
+        }
+
+        .paradigm-btn:hover {
+            background: var(--border-soft);
+        }
+
+        .paradigm-btn.active {
+            background: var(--accent-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .document-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .document-row {
+            display: flex;
+            align-items: center;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            gap: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .document-row.inactive {
+            opacity: 0.5;
+            background: var(--border-soft);
+        }
+
+        .rank-badge {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 0.8rem;
+            background: var(--border-soft);
+            border: 1px solid var(--border-color);
+            color: var(--text-heading);
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+            width: 60px;
+            text-align: center;
+        }
+
+        .document-row.active-rank .rank-badge {
+            background: var(--accent-light);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .doc-title-wrapper {
+            flex: 1;
+        }
+
+        .doc-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-heading);
+        }
+
+        .doc-desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .relevance-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .binary-btn {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+            background: var(--border-soft);
+            color: var(--text-muted);
+            font-family: var(--font-sans);
+        }
+
+        .binary-btn.relevant {
+            background: #ecfdf5;
+            border-color: #10b981;
+            color: #047857;
+        }
+
+        .binary-btn.irrelevant {
+            background: #fef2f2;
+            border-color: #f87171;
+            color: #b91c1c;
+        }
+
+        .graded-score-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: var(--bg-body);
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-muted);
+        }
+
+        .graded-score-btn:hover {
+            border-color: var(--accent-color);
+        }
+
+        .graded-score-btn.active[data-score="3"] {
+            background: #8b5cf6;
+            border-color: #8b5cf6;
+            color: white;
+        }
+
+        .graded-score-btn.active[data-score="2"] {
+            background: #a78bfa;
+            border-color: #a78bfa;
+            color: white;
+        }
+
+        .graded-score-btn.active[data-score="1"] {
+            background: #c084fc;
+            border-color: #c084fc;
+            color: white;
+        }
+
+        .graded-score-btn.active[data-score="0"] {
+            background: #94a3b8;
+            border-color: #94a3b8;
+            color: white;
+        }
+
+        .row-order-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .order-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            color: var(--text-muted);
+            border-radius: 3px;
+            padding: 0.05rem 0.25rem;
+            font-size: 0.6rem;
+            line-height: 1;
+        }
+
+        .order-btn:hover {
+            background: var(--border-soft);
+            color: var(--text-heading);
+        }
+
+        .simulator-outputs {
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        .simulator-outputs h4 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-output-card {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .metric-output-card.disabled {
+            opacity: 0.4;
+            background: #f1f5f9;
+        }
+
+        .metric-name {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-value {
+            font-family: var(--font-heading);
+            font-weight: 800;
+            font-size: 1.35rem;
+            color: var(--text-heading);
+            margin-bottom: 0.25rem;
+        }
+
+        .metric-math {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .formula-details {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-top: 1.5rem;
+            background: var(--bg-body);
+        }
+
+        .formula-summary {
+            cursor: pointer;
+            padding: 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-heading);
+            user-select: none;
+        }
+
+        .formula-content {
+            padding: 0 1rem 1rem 1rem;
+            border-top: 1px solid var(--border-soft);
+            margin-top: 0;
+        }
+
+        .formula-content h5 {
+            font-family: var(--font-heading);
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin: 1rem 0 0.5rem 0;
+            color: var(--text-heading);
+        }
+
+        .formula-content p {
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+
+        .formula-disclaimer {
+            font-size: 0.8rem !important;
+            margin-top: 1rem;
+            color: var(--text-muted);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* SVG styles override */
+        .pipeline-figure {
+            margin: 2rem 0;
+        }
+
+        /* Dark mode overrides for simulator */
+        @media (prefers-color-scheme: dark) {
+            .metric-output-card.disabled {
+                background: #020617;
+                opacity: 0.3;
+            }
+
+            .simulator-card {
+                background-color: var(--border-soft);
+            }
+
+            .simulator-controls {
+                background-color: #0f172a;
+            }
+
+            .document-row {
+                background-color: #1e293b;
+            }
+
+            .document-row.inactive {
+                background-color: #0f172a;
+            }
+
+            .binary-btn {
+                background-color: #1e293b;
+            }
+
+            .binary-btn.relevant {
+                background: #064e3b;
+                border-color: #059669;
+                color: #a7f3d0;
+            }
+
+            .binary-btn.irrelevant {
+                background: #7f1d1d;
+                border-color: #ef4444;
+                color: #fca5a5;
+            }
+
+            .graded-score-btn {
+                background: #0f172a;
+            }
+
+            .graded-score-btn.active[data-score="3"] {
+                background: #7c3aed;
+                border-color: #7c3aed;
+            }
+
+            .graded-score-btn.active[data-score="2"] {
+                background: #8b5cf6;
+                border-color: #8b5cf6;
+            }
+
+            .graded-score-btn.active[data-score="1"] {
+                background: #a78bfa;
+                border-color: #a78bfa;
+            }
+
+            .graded-score-btn.active[data-score="0"] {
+                background: #64748b;
+                border-color: #64748b;
+            }
+
+            .metric-output-card {
+                background-color: #1e293b;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout-wrapper">
+        <article class="article-content">
+            <header class="article-header">
+                <h1 class="article-title">Evaluative Mechanics: Demystifying Retrieval Metrics for RAG</h1>
+            </header>
+
+            <nav class="table-of-contents">
+                <details class="toc-details" open>
+                    <summary class="toc-summary">
+                        <h3>Table of Contents</h3>
+                        <span class="toc-toggle-icon">▼</span>
+                    </summary>
+                    <div class="toc-content">
+                        <ul>
+                            <li><a href="#introduction">The Retrieval Evaluation Pipeline</a></li>
+                            <li><a href="#relevance-paradigms">Relevance Paradigms: Binary vs. Graded</a></li>
+                            <li><a href="#simulator">Interactive Retrieval Simulator</a></li>
+                            <li><a href="#precision-recall">Precision@K &amp; Recall@K</a></li>
+                            <li><a href="#hit-rate">Hit Rate@K</a></li>
+                            <li><a href="#mrr">Mean Reciprocal Rank (MRR)</a></li>
+                            <li><a href="#map">Mean Average Precision (MAP)</a></li>
+                            <li><a href="#ndcg">Normalized Discounted Cumulative Gain (NDCG)</a></li>
+                            <li><a href="#ndcg-stepper">NDCG Calculation Steps</a></li>
+                            <li><a href="#quiz">Knowledge Check</a></li>
+                            <li><a href="#matrix">Summary Selection Matrix</a></li>
+                        </ul>
+                    </div>
+                </details>
+            </nav>
+
+            <section id="introduction">
+                <h2>The Retrieval Evaluation Pipeline</h2>
+                <p>
+                    In Retrieval-Augmented Generation (RAG), the performance of your system is strictly capped by the
+                    quality of its retrieval engine. If the retrieval step feeds irrelevant context to the Large
+                    Language Model (LLM), the generator will hallucinate, lose context, or generate garbage output.
+                </p>
+                <p>
+                    While vector databases use raw distance metrics like Cosine Similarity or L2 distance to index and
+                    retrieve vectors, these metrics do not tell you whether the retrieved documents are actually correct
+                    or well-ordered for downstream tasks. To evaluate this, you must use traditional Information
+                    Retrieval (IR) metrics.
+                </p>
+                <p>
+                    The evaluation pipeline takes a query, retrieves the top \(K\) documents from a vector index, and
+                    compares them against a gold-standard ground truth. The ground truth consists of the set of known
+                    relevant documents in your database.
+                </p>
+
+                <figure class="pipeline-figure">
+                    <svg viewBox="0 0 800 220" width="100%" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                                <path d="M0,0 L0,6 L6,3 z" fill="#64748b" />
+                            </marker>
+                        </defs>
+
+                        <!-- Step 1: Query -->
+                        <g>
+                            <rect x="15" y="85" width="100" height="50" rx="6" fill="#eff6ff" stroke="#2563eb"
+                                stroke-width="2" />
+                            <text x="65" y="115" text-anchor="middle" font-family="Outfit, sans-serif" font-weight="600"
+                                font-size="13" fill="#1e3a8a">Query Q</text>
+                        </g>
+
+                        <!-- Arrow 1 -->
+                        <line x1="115" y1="110" x2="155" y2="110" stroke="#64748b" stroke-width="2"
+                            marker-end="url(#arrow)" />
+
+                        <!-- Step 2: Database -->
+                        <g>
+                            <rect x="155" y="85" width="120" height="50" rx="6" fill="#f8fafc" stroke="#64748b"
+                                stroke-width="2" />
+                            <text x="215" y="115" text-anchor="middle" font-family="Inter, sans-serif" font-size="12"
+                                fill="#334155">Vector Store (N)</text>
+                        </g>
+
+                        <!-- Arrow 2 -->
+                        <line x1="275" y1="110" x2="315" y2="110" stroke="#64748b" stroke-width="2"
+                            marker-end="url(#arrow)" />
+
+                        <!-- Step 3: Retrieval -->
+                        <g>
+                            <rect x="315" y="85" width="120" height="50" rx="6" fill="#f8fafc" stroke="#64748b"
+                                stroke-width="2" />
+                            <text x="375" y="115" text-anchor="middle" font-family="Inter, sans-serif" font-size="12"
+                                fill="#334155">KNN Index (Top K)</text>
+                        </g>
+
+                        <!-- Arrow 3 -->
+                        <line x1="435" y1="110" x2="475" y2="110" stroke="#64748b" stroke-width="2"
+                            marker-end="url(#arrow)" />
+
+                        <!-- Step 4: Doc Stack -->
+                        <g>
+                            <rect x="485" y="65" width="100" height="70" rx="4" fill="#f1f5f9" stroke="#cbd5e1"
+                                stroke-width="1.5" />
+                            <rect x="480" y="75" width="100" height="70" rx="4" fill="#f1f5f9" stroke="#cbd5e1"
+                                stroke-width="1.5" />
+                            <rect x="475" y="85" width="100" height="70" rx="4" fill="#ffffff" stroke="#94a3b8"
+                                stroke-width="2" />
+                            <text x="525" y="125" text-anchor="middle" font-family="Outfit, sans-serif"
+                                font-weight="600" font-size="12" fill="#0f172a">Top K Stack</text>
+                        </g>
+
+                        <!-- Arrow 4 -->
+                        <line x1="585" y1="120" x2="625" y2="120" stroke="#64748b" stroke-width="2"
+                            marker-end="url(#arrow)" />
+
+                        <!-- Step 5: Evaluation Layer -->
+                        <g>
+                            <rect x="625" y="25" width="160" height="170" rx="8" fill="#faf5ff" stroke="#8b5cf6"
+                                stroke-width="2" />
+                            <text x="705" y="48" text-anchor="middle" font-family="Outfit, sans-serif" font-weight="700"
+                                font-size="13" fill="#5b21b6">Evaluation Layer</text>
+
+                            <text x="640" y="80" font-family="Inter, sans-serif" font-size="11" fill="#5b21b6">•
+                                Precision &amp; Recall</text>
+                            <text x="640" y="105" font-family="Inter, sans-serif" font-size="11" fill="#5b21b6">• Hit
+                                Rate @ K</text>
+                            <text x="640" y="130" font-family="Inter, sans-serif" font-size="11" fill="#5b21b6">•
+                                Reciprocal Rank</text>
+                            <text x="640" y="155" font-family="Inter, sans-serif" font-size="11" fill="#5b21b6">•
+                                Average Precision</text>
+                            <text x="640" y="180" font-family="Inter, sans-serif" font-size="11" fill="#5b21b6">• NDCG
+                                (Graded)</text>
+                        </g>
+                    </svg>
+                    <figcaption>The RAG retrieval evaluation flow: comparing the retrieved document stack against a
+                        vector database baseline using binary and graded relevance rules.</figcaption>
+                </figure>
+            </section>
+
+            <section id="relevance-paradigms">
+                <h2>Relevance Paradigms: Binary vs. Graded</h2>
+                <p>
+                    Evaluation metrics are divided based on how relevance is labeled.
+                </p>
+
+                <div class="comparison-tabs">
+                    <div class="comparison-tab-headers">
+                        <button class="comparison-tab-btn is-active" data-tab="binary">Binary Relevance</button>
+                        <button class="comparison-tab-btn" data-tab="graded">Graded Relevance</button>
+                    </div>
+                    <div class="comparison-tab-panel is-active" data-panel="binary">
+                        <p>
+                            In the <strong>Binary Relevance</strong> paradigm, a document is either relevant (\(1\) or
+                            \(\checkmark\)) or irrelevant (\(0\) or \(\times\)).
+                        </p>
+                        <p>
+                            This is the simplest way to annotate data. It is easy to construct and verify. Metrics using
+                            this model include Precision@K, Recall@K, Hit Rate@K, MRR, and MAP.
+                        </p>
+                    </div>
+                    <div class="comparison-tab-panel" data-panel="graded">
+                        <p>
+                            In the <strong>Graded Relevance</strong> paradigm, a document is given a score representing
+                            its level of utility.
+                        </p>
+                        <p>
+                            For example, you can use a scale where \(3\) represents highly relevant, \(1\) represents
+                            partially relevant, and \(0\) represents irrelevant. This models search results more
+                            accurately. It supports nuanced differences in document utility. The primary metric using
+                            this model is NDCG.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="simulator">
+                <h2>Interactive Retrieval Simulator</h2>
+                <p>
+                    Use this simulator to see how changes to the retrieval stack affect all six metrics. Adjust the
+                    evaluation depth \(K\) and total database relevant documents \(N\). Move documents to change their
+                    rank order. Toggle relevance in binary mode, or set specific utility scores in graded mode.
+                </p>
+
+                <div class="simulator-card">
+                    <div class="simulator-header">
+                        <h3>Retrieval Stack Simulator</h3>
+                        <p>Re-rank documents, toggle relevance, and adjust sliders to see changes instantly.</p>
+                    </div>
+
+                    <div class="simulator-controls">
+                        <div class="control-row">
+                            <div class="primitive-control">
+                                <label class="primitive-label">Relevance Mode</label>
+                                <div class="paradigm-toggle">
+                                    <button type="button" class="paradigm-btn active"
+                                        id="paradigm-binary">Binary</button>
+                                    <button type="button" class="paradigm-btn" id="paradigm-graded">Graded</button>
+                                </div>
+                            </div>
+
+                            <div class="primitive-control">
+                                <label class="primitive-label" for="k-slider">
+                                    Rank Depth (K)
+                                    <span class="primitive-value" id="k-value">5</span>
+                                </label>
+                                <input type="range" min="1" max="5" value="5" id="k-slider" />
+                            </div>
+
+                            <div class="primitive-control">
+                                <label class="primitive-label" for="n-slider">
+                                    Total DB Relevant (N)
+                                    <span class="primitive-value" id="n-value">6</span>
+                                </label>
+                                <input type="range" min="1" max="10" value="6" id="n-slider" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="document-stack" id="document-stack">
+                        <!-- Instantiated by JS -->
+                    </div>
+
+                    <div class="simulator-outputs">
+                        <h4>Real-Time Performance Metrics</h4>
+                        <div class="metrics-grid">
+                            <div class="metric-output-card" id="metric-precision">
+                                <div class="metric-name">Precision@K</div>
+                                <div class="metric-value" id="val-precision">0.60</div>
+                                <div class="metric-math" id="math-precision">3 / 5</div>
+                            </div>
+                            <div class="metric-output-card" id="metric-recall">
+                                <div class="metric-name">Recall@K</div>
+                                <div class="metric-value" id="val-recall">0.50</div>
+                                <div class="metric-math" id="math-recall">3 / 6</div>
+                            </div>
+                            <div class="metric-output-card" id="metric-hitrate">
+                                <div class="metric-name">Hit Rate@K</div>
+                                <div class="metric-value" id="val-hitrate">1.00</div>
+                                <div class="metric-math" id="math-hitrate">1</div>
+                            </div>
+                            <div class="metric-output-card" id="metric-rr">
+                                <div class="metric-name">Reciprocal Rank (RR)</div>
+                                <div class="metric-value" id="val-rr">1.00</div>
+                                <div class="metric-math" id="math-rr">1 / 1</div>
+                            </div>
+                            <div class="metric-output-card" id="metric-ap">
+                                <div class="metric-name">Average Precision (AP)</div>
+                                <div class="metric-value" id="val-ap">0.76</div>
+                                <div class="metric-math" id="math-ap">(1.0+0.67+0.6)/3</div>
+                            </div>
+                            <div class="metric-output-card disabled" id="metric-ndcg">
+                                <div class="metric-name">NDCG@K</div>
+                                <div class="metric-value" id="val-ndcg">0.96</div>
+                                <div class="metric-math" id="math-ndcg">DCG: 3.50 / IDCG: 3.63</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <details class="formula-details">
+                        <summary class="formula-summary">How are these values calculated?</summary>
+                        <div class="formula-content">
+                            <p>Here are the mathematical formulas for each metric:</p>
+
+                            <h5>Precision@K</h5>
+                            <p>Calculates the percentage of retrieved documents that are relevant up to depth \(K\).</p>
+                            <div class="code-container">
+                                <pre><code>Precision@K = (Relevant Docs in top K) / K</code></pre>
+                            </div>
+
+                            <h5>Recall@K</h5>
+                            <p>Measures the fraction of all relevant database documents \(N\) captured in the top \(K\).
+                            </p>
+                            <div class="code-container">
+                                <pre><code>Recall@K = (Relevant Docs in top K) / N</code></pre>
+                            </div>
+
+                            <h5>Hit Rate@K</h5>
+                            <p>A simple check that returns \(1\) if at least one relevant document is found in the top
+                                \(K\), otherwise \(0\).</p>
+                            <div class="code-container">
+                                <pre><code>Hit Rate@K = 1 if (Relevant Docs in top K) > 0 else 0</code></pre>
+                            </div>
+
+                            <h5>Reciprocal Rank (RR)</h5>
+                            <p>The inverse rank of the first relevant document. If no relevant document is retrieved,
+                                the score is \(0\).</p>
+                            <div class="code-container">
+                                <pre><code>RR = 1 / rank_first</code></pre>
+                            </div>
+
+                            <h5>Average Precision (AP)</h5>
+                            <p>Evaluates list ranking quality by calculating the running average of precision at each
+                                relevant document position.</p>
+                            <div class="code-container">
+                                <pre><code>AP = (Sum_{i=1}^K Precision@i * rel_i) / (Relevant Docs in top K)</code></pre>
+                            </div>
+
+                            <h5>Normalized Discounted Cumulative Gain (NDCG@K)</h5>
+                            <p>Applies a logarithmic discount to relevance scores based on position, normalized by the
+                                ideal order score.</p>
+                            <div class="code-container">
+                                <pre><code>DCG@K = Sum_{i=1}^K rel_i / log_2(i + 1)
+IDCG@K = Sum_{i=1}^K sorted_rel_i / log_2(i + 1)
+NDCG@K = DCG@K / IDCG@K</code></pre>
+                            </div>
+
+                            <p class="formula-disclaimer"><em>Note: If you run Graded relevance mode, scores of 1, 2,
+                                    and 3 are mapped to relevant (1) for binary metrics, while 0 maps to irrelevant
+                                    (0).</em></p>
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <section id="precision-recall">
+                <h2>Precision@K &amp; Recall@K (The Binary Foundation)</h2>
+                <p>
+                    These metrics measure the purity of your retrieved stack versus its coverage of the database.
+                </p>
+                <h3>Precision@K</h3>
+                <p>
+                    Precision@K calculates the percentage of retrieved documents that are relevant.
+                </p>
+                <p>
+                    For example, if you have three relevant documents in your top five:
+                </p>
+                \[\text{Precision@5} = \frac{\text{Relevant Documents in Top 5}}{5} = \frac{3}{5} = 0.60\ (60\%)\]
+
+                <h3>Recall@K</h3>
+                <p>
+                    Recall@K measures the fraction of all relevant database documents (\(N\)) captured in the retrieved
+                    stack.
+                </p>
+                <p>
+                    If the total number of relevant documents in the vector store is \(N=6\):
+                </p>
+                \[\text{Recall@5} = \frac{\text{Relevant Documents in Top 5}}{\text{Total Relevant in DB (N)}} =
+                \frac{3}{6} = 0.50\ (50\%)\]
+
+                <div class="callout">
+                    <p>
+                        <strong>Order Insensitivity</strong>: Precision@K and Recall@K are order-insensitive within the
+                        top \(K\). They do not care if your best result is at Rank 1 or Rank 5. If you shuffle the stack
+                        positions, the final calculations remain exactly the same.
+                    </p>
+                </div>
+            </section>
+
+            <section id="hit-rate">
+                <h2>Hit Rate@K (Vector Search Benchmark)</h2>
+                <p>
+                    Hit Rate is a simplified binary metric widely used in vector database performance benchmarks. It
+                    asks a binary question: <em>Did you retrieve at least one relevant document in your top \(K\)?</em>
+                </p>
+                <p>
+                    To calculate the average Hit Rate over a query set \(Q\), you sum the query hits and divide by the
+                    total query count. For example, if you evaluate three queries with \(K=3\):
+                </p>
+                <ul>
+                    <li>Query 1: \([\checkmark, \times, \times]\) &rarr; Hit Rate = 1</li>
+                    <li>Query 2: \([\times, \times, \times]\) &rarr; Hit Rate = 0</li>
+                    <li>Query 3: \([\times, \checkmark, \times]\) &rarr; Hit Rate = 1</li>
+                </ul>
+                \[\text{Average Hit Rate@3} = \frac{1 + 0 + 1}{3} \approx 0.67\ (67\%)\]
+                <p>
+                    Hit Rate is useful for simple search tasks where any single correct document answers your user
+                    query.
+                </p>
+            </section>
+
+            <section id="mrr">
+                <h2>Mean Reciprocal Rank (MRR)</h2>
+                <p>
+                    MRR is an order-sensitive metric designed for navigational searches or single-answer lookups. It
+                    only evaluates the rank of the first relevant document. Any subsequent hits are ignored.
+                </p>
+                <p>
+                    The Reciprocal Rank (RR) is the inverse of the first correct rank:
+                </p>
+                \[\text{RR} = \frac{1}{\text{rank}_{\text{first}}}\]
+                <p>
+                    Consider two queries evaluated side-by-side:
+                </p>
+                <ul>
+                    <li><strong>Query A</strong>: The first relevant document appears at Rank 3. Subsequent hits are
+                        ignored.
+                        \[\text{RR}_A = \frac{1}{3} \approx 0.33\]
+                    </li>
+                    <li><strong>Query B</strong>: The first relevant document appears at Rank 1.
+                        \[\text{RR}_B = \frac{1}{1} = 1.00\]
+                    </li>
+                </ul>
+                <p>
+                    Taking the mean across both queries yields:
+                </p>
+                \[\text{MRR} = \frac{\text{RR}_A + \text{RR}_B}{2} = \frac{0.33 + 1.00}{2} \approx 0.67\]
+            </section>
+
+            <section id="map">
+                <h2>Mean Average Precision (MAP)</h2>
+                <p>
+                    MAP is the standard metric for ranked lists using binary relevance. It evaluates the entire ranking
+                    quality by calculating the Precision at each relevant rank position.
+                </p>
+                <p>
+                    First, calculate the Average Precision (AP) for a single query:
+                </p>
+                \[\text{AP} = \frac{\sum_{i=1}^{K} \text{Precision@i} \times rel_i}{\text{Total Retrieved Relevant
+                Documents}}\]
+                <p>
+                    For a query with relevant documents at ranks 1, 3, and 5:
+                </p>
+                <ul>
+                    <li>At Rank 1 (Relevant): \(\text{P@1} = 1/1 = 1.00\)</li>
+                    <li>At Rank 3 (Relevant): \(\text{P@3} = 2/3 \approx 0.67\)</li>
+                    <li>At Rank 5 (Relevant): \(\text{P@5} = 3/5 = 0.60\)</li>
+                </ul>
+                \[\text{AP}_{\text{Good}} = \frac{1.00 + 0.67 + 0.60}{3} \approx 0.76\]
+                <p>
+                    If the relevant items are pushed down to ranks 4 and 5:
+                </p>
+                <ul>
+                    <li>At Rank 4 (Relevant): \(\text{P@4} = 1/4 = 0.25\)</li>
+                    <li>At Rank 5 (Relevant): \(\text{P@5} = 2/5 = 0.40\)</li>
+                </ul>
+                \[\text{AP}_{\text{Bad}} = \frac{0.25 + 0.40}{2} \approx 0.33\]
+                <p>
+                    To find MAP, you average the AP scores across your query set. MAP successfully penalizes queries
+                    that delay relevant results.
+                </p>
+            </section>
+
+            <section id="ndcg">
+                <h2>Normalized Discounted Cumulative Gain (NDCG)</h2>
+                <p>
+                    NDCG is used when relevance is graded rather than binary. It relies on a logarithmic position
+                    discount. It penalizes highly relevant documents placed low in the stack.
+                </p>
+                <p>
+                    To calculate NDCG, you must calculate Cumulative Gain (CG), Discounted Cumulative Gain (DCG), and
+                    Ideal DCG (IDCG).
+                </p>
+            </section>
+
+            <section id="ndcg-stepper">
+                <h2>NDCG Calculation Steps</h2>
+                <p>
+                    Walk through the steps of calculating NDCG for a stack with utility scores \([3, 0, 1]\).
+                </p>
+
+                <div class="stepper">
+                    <div class="stepper-header">
+                        <div class="stepper-dot is-active"></div>
+                        <div class="stepper-dot"></div>
+                        <div class="stepper-dot"></div>
+                        <div class="stepper-dot"></div>
+                    </div>
+                    <div class="stepper-content-wrapper">
+                        <div class="stepper-step is-active">
+                            <h3>Step 1: Cumulative Gain (CG)</h3>
+                            <p>
+                                Sum the raw relevance scores without applying position discounts. For the stack \([3, 0,
+                                1]\):
+                            </p>
+                            \[\text{CG} = \sum_{i=1}^{K} rel_i = 3 + 0 + 1 = 4\]
+                            <p>
+                                CG does not penalize ordering errors. If you shuffle the list to \([0, 1, 3]\), the CG
+                                remains 4.
+                            </p>
+                        </div>
+                        <div class="stepper-step">
+                            <h3>Step 2: Discounted Cumulative Gain (DCG)</h3>
+                            <p>
+                                Apply a logarithmic discount to each score based on its rank index. This penalizes
+                                relevant documents placed lower in the list:
+                            </p>
+                            \[\text{DCG} = \sum_{i=1}^{K} \frac{rel_i}{\log_2(i + 1)}\]
+                            <p>
+                                For our list:
+                            </p>
+                            \[\text{DCG} = \frac{3}{\log_2(2)} + \frac{0}{\log_2(3)} + \frac{1}{\log_2(4)} =
+                            \frac{3}{1.0} + 0 + \frac{1}{2.0} = 3.5\]
+                        </div>
+                        <div class="stepper-step">
+                            <h3>Step 3: Ideal DCG (IDCG)</h3>
+                            <p>
+                                Determine the maximum possible score by sorting the retrieved documents in descending
+                                order. This produces the ideal ranking: \([3, 1, 0]\).
+                            </p>
+                            <p>
+                                Calculate the DCG of this ideal list:
+                            </p>
+                            \[\text{IDCG} = \frac{3}{\log_2(2)} + \frac{1}{\log_2(3)} + \frac{0}{\log_2(4)} \approx 3.0
+                            + \frac{1}{1.585} + 0 \approx 3.63\]
+                        </div>
+                        <div class="stepper-step">
+                            <h3>Step 4: Normalization (NDCG)</h3>
+                            <p>
+                                Normalize the DCG by dividing it by the IDCG. This scales the final metric value between
+                                \(0.0\) and \(1.0\):
+                            </p>
+                            \[\text{NDCG} = \frac{\text{DCG}}{\text{IDCG}} = \frac{3.5}{3.63} \approx 0.96\]
+                            <p>
+                                A perfect ranking scores 1.0. Lower scores indicate ordering issues.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="stepper-controls">
+                        <button class="stepper-btn is-prev">Back</button>
+                        <button class="stepper-btn is-next">Next</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="quiz">
+                <h2>Knowledge Check</h2>
+                <p>
+                    Verify your understanding of these retrieval evaluation metrics.
+                </p>
+
+                <div class="quiz-container" data-allow-retry="true">
+                    <div class="quiz-question">
+                        You swap documents at Rank 2 and Rank 5 in a retrieval list. Which metrics will change?
+                    </div>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="false">Precision@5 and Recall@5</div>
+                        <div class="quiz-option" data-correct="true">MAP and NDCG</div>
+                        <div class="quiz-option" data-correct="false">Hit Rate@5 only</div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <div data-feedback="correct">
+                            <strong>Correct!</strong> MAP and NDCG are order-sensitive. Toggling rank positions will
+                            shift their output. Precision, Recall, and Hit Rate are order-insensitive within the top
+                            \(K\).
+                        </div>
+                        <div data-feedback="incorrect">
+                            <strong>Incorrect.</strong> Precision and Recall are order-insensitive inside the top \(K\).
+                            Think about which metrics evaluate positions.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quiz-container" data-allow-retry="true">
+                    <div class="quiz-question">
+                        Your RAG application provides a single definitive answer to factoid questions. Which metric
+                        should you prioritize?
+                    </div>
+                    <div class="quiz-options">
+                        <div class="quiz-option" data-correct="true">Mean Reciprocal Rank (MRR)</div>
+                        <div class="quiz-option" data-correct="false">Recall@K</div>
+                        <div class="quiz-option" data-correct="false">Normalized Discounted Cumulative Gain (NDCG)</div>
+                    </div>
+                    <div class="quiz-feedback">
+                        <div data-feedback="correct">
+                            <strong>Correct!</strong> MRR is optimized for navigational or single-answer retrieval where
+                            you only care about the rank position of the first correct hit.
+                        </div>
+                        <div data-feedback="incorrect">
+                            <strong>Incorrect.</strong> Recall measuring database coverage is too broad, and NDCG
+                            requires graded relevance. For single-answer lookups, the rank of the first hit is key.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="matrix">
+                <h2>Summary Selection Matrix</h2>
+                <p>
+                    Use this table to choose the appropriate metric for your retrieval task.
+                </p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Relevance Type</th>
+                            <th>Order Sensitive?</th>
+                            <th>Best Use Case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Hit Rate / Recall</strong></td>
+                            <td>Binary</td>
+                            <td>No</td>
+                            <td><strong>Coverage</strong>: Confirms if the target text is present in the context window.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Precision</strong></td>
+                            <td>Binary</td>
+                            <td>No</td>
+                            <td><strong>Cost Control</strong>: Reduces noise in the prompt to minimize tokens and
+                                distractors.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MRR</strong></td>
+                            <td>Binary</td>
+                            <td>Yes</td>
+                            <td><strong>Factoid QA</strong>: Evaluates systems returning a single target answer.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>MAP</strong></td>
+                            <td>Binary</td>
+                            <td>Yes</td>
+                            <td><strong>General Retrieval</strong>: Measures ranking quality across multiple relevant
+                                source documents.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>NDCG</strong></td>
+                            <td>Graded</td>
+                            <td>Yes</td>
+                            <td><strong>Nuanced Search</strong>: Essential when documents contain degrees of relevance.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </article>
+    </div>
+
+    <script>
+        /* Inlined from ./base.js */
+        // base.js — always included. Handles copy-button behavior for code blocks.
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initCodeCopyButtons);
+        } else {
+            initCodeCopyButtons();
+        }
+
+        function initCodeCopyButtons() {
+            document.querySelectorAll(".copy-btn").forEach((btn) => {
+                if (btn.dataset.copyInitialized) return;
+                btn.dataset.copyInitialized = "true";
+
+                btn.addEventListener("click", () => {
+                    const codeContainer = btn.closest(".code-container");
+                    if (!codeContainer) return;
+
+                    const codeBlock =
+                        codeContainer.querySelector("pre code") ||
+                        codeContainer.querySelector("pre");
+                    if (codeBlock) {
+                        navigator.clipboard
+                            .writeText(codeBlock.textContent)
+                            .then(() => {
+                                const originalText = btn.textContent;
+                                btn.textContent = "Copied!";
+                                btn.style.color = "#34d399";
+                                btn.style.borderColor = "#34d399";
+                                setTimeout(() => {
+                                    btn.textContent = originalText;
+                                    btn.style.color = "";
+                                    btn.style.borderColor = "";
+                                }, 2000);
+                            })
+                            .catch((err) => console.error("Copy failed", err));
+                    }
+                });
+            });
+        }
+
+    </script>
+    <script>
+        /* Inlined from ./components/quiz.js */
+        // quiz.js — knowledge-check quiz interaction for .quiz-container elements.
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initQuizzes);
+        } else {
+            initQuizzes();
+        }
+
+        function initQuizzes() {
+            document.querySelectorAll(".quiz-container").forEach((quiz) => {
+                if (quiz.dataset.initialized) return;
+                quiz.dataset.initialized = "true";
+
+                const options = quiz.querySelectorAll(".quiz-option");
+                const feedback = quiz.querySelector(".quiz-feedback");
+                const allowRetry = quiz.dataset.allowRetry === "true";
+
+                const resetQuiz = () => {
+                    delete quiz.dataset.completed;
+                    options.forEach((opt) => {
+                        opt.classList.remove(
+                            "is-disabled",
+                            "is-correct",
+                            "is-incorrect",
+                            "is-selected",
+                        );
+                    });
+                    const existingRetryBtn = quiz.querySelector(".quiz-retry-btn");
+                    if (existingRetryBtn) existingRetryBtn.remove();
+                    if (feedback) {
+                        feedback.classList.remove("is-visible", "is-correct", "is-incorrect");
+                        feedback
+                            .querySelectorAll("[data-feedback]")
+                            .forEach((el) => el.classList.remove("is-active"));
+                        const dynamicPrefix = feedback.querySelector("strong[data-dynamic]");
+                        if (dynamicPrefix) dynamicPrefix.remove();
+                    }
+                };
+
+                options.forEach((option) => {
+                    option.addEventListener("click", () => {
+                        if (quiz.dataset.completed) return;
+
+                        const isCorrect = option.dataset.correct === "true";
+
+                        quiz.dataset.completed = "true";
+                        options.forEach((opt) => {
+                            opt.classList.add("is-disabled");
+                            // Only reveal the correct answer if the player got it right,
+                            // or if there is no retry — avoids spoiling the answer on a wrong guess.
+                            if (opt.dataset.correct === "true" && (isCorrect || !allowRetry))
+                                opt.classList.add("is-correct");
+                            else if (opt === option && !isCorrect)
+                                opt.classList.add("is-incorrect");
+                        });
+
+                        if (feedback) {
+                            const correctMsg = feedback.querySelector(
+                                '[data-feedback="correct"]',
+                            );
+                            const incorrectMsg = feedback.querySelector(
+                                '[data-feedback="incorrect"]',
+                            );
+                            const generalMsg = feedback.querySelector(
+                                '[data-feedback="general"]',
+                            );
+
+                            if (correctMsg || incorrectMsg) {
+                                if (isCorrect && correctMsg) correctMsg.classList.add("is-active");
+                                else if (!isCorrect && incorrectMsg)
+                                    incorrectMsg.classList.add("is-active");
+                                if (generalMsg) generalMsg.classList.add("is-active");
+                            } else {
+                                const resultPrefix = document.createElement("strong");
+                                resultPrefix.dataset.dynamic = "true";
+                                resultPrefix.textContent = isCorrect ? "Correct! " : "Incorrect. ";
+                                resultPrefix.style.color = isCorrect ? "#059669" : "#dc2626";
+                                feedback.prepend(resultPrefix);
+                            }
+
+                            if (!isCorrect) {
+                                quiz.classList.add("shake");
+                                setTimeout(() => quiz.classList.remove("shake"), 500);
+
+                                if (allowRetry) {
+                                    const retryBtn = document.createElement("button");
+                                    retryBtn.className = "quiz-retry-btn";
+                                    retryBtn.textContent = "Try Again";
+                                    retryBtn.addEventListener("click", (e) => {
+                                        e.stopPropagation();
+                                        resetQuiz();
+                                    });
+                                    feedback.appendChild(retryBtn);
+                                }
+                            }
+
+                            feedback.classList.add("is-visible");
+                            feedback.classList.add(isCorrect ? "is-correct" : "is-incorrect");
+                        }
+                    });
+                });
+            });
+        }
+
+    </script>
+    <script>
+        /* Inlined from ./components/stepper.js */
+        // stepper.js — multi-step walkthrough interaction for .stepper elements.
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initSteppers);
+        } else {
+            initSteppers();
+        }
+
+        function initSteppers() {
+            document.querySelectorAll(".stepper").forEach((stepper) => {
+                if (stepper.dataset.initialized) return;
+                stepper.dataset.initialized = "true";
+
+                const steps = stepper.querySelectorAll(".stepper-step");
+                const dots = stepper.querySelectorAll(".stepper-dot");
+                const prevBtn = stepper.querySelector(".stepper-btn.is-prev");
+                const nextBtn = stepper.querySelector(".stepper-btn.is-next");
+
+                // Auto-inject step counter into the header
+                const header = stepper.querySelector(".stepper-header");
+                let counter = null;
+                if (header && steps.length > 0) {
+                    counter = document.createElement("span");
+                    counter.className = "stepper-counter";
+                    header.appendChild(counter);
+                }
+
+                let currentStep = 0;
+
+                const updateStepper = () => {
+                    steps.forEach((step, i) =>
+                        step.classList.toggle("is-active", i === currentStep),
+                    );
+                    dots.forEach((dot, i) =>
+                        dot.classList.toggle("is-active", i === currentStep),
+                    );
+                    if (prevBtn) prevBtn.disabled = currentStep === 0;
+                    if (nextBtn) nextBtn.disabled = currentStep === steps.length - 1;
+                    if (counter)
+                        counter.textContent = `Step ${currentStep + 1} of ${steps.length}`;
+                };
+
+                if (prevBtn)
+                    prevBtn.addEventListener("click", () => {
+                        if (currentStep > 0) {
+                            currentStep--;
+                            updateStepper();
+                        }
+                    });
+
+                if (nextBtn)
+                    nextBtn.addEventListener("click", () => {
+                        if (currentStep < steps.length - 1) {
+                            currentStep++;
+                            updateStepper();
+                        }
+                    });
+
+                updateStepper();
+            });
+        }
+
+    </script>
+    <script>
+        /* Inlined from ./components/comparison-tabs.js */
+        // comparison-tabs.js — tab switcher for .comparison-tabs elements.
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initComparisonTabs);
+        } else {
+            initComparisonTabs();
+        }
+
+        function initComparisonTabs() {
+            document.querySelectorAll(".comparison-tabs").forEach((container) => {
+                if (container.dataset.initialized) return;
+                container.dataset.initialized = "true";
+
+                const btns = container.querySelectorAll(".comparison-tab-btn");
+                const panels = container.querySelectorAll(".comparison-tab-panel");
+
+                btns.forEach((btn) => {
+                    btn.addEventListener("click", () => {
+                        const target = btn.dataset.tab;
+                        btns.forEach((b) => b.classList.remove("is-active"));
+                        panels.forEach((p) => p.classList.remove("is-active"));
+                        btn.classList.add("is-active");
+                        const targetPanel = container.querySelector(`[data-panel="${target}"]`);
+                        if (targetPanel) targetPanel.classList.add("is-active");
+                    });
+                });
+            });
+        }
+
+    </script>
+    <script>
+        /* Inlined from ./components/primitives.js */
+        // primitives.js — range-input value display wiring for .primitive-control elements.
+
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", initPrimitives);
+        } else {
+            initPrimitives();
+        }
+
+        function initPrimitives() {
+            document.querySelectorAll('input[type="range"]').forEach((range) => {
+                if (range.dataset.initialized) return;
+                range.dataset.initialized = "true";
+
+                const valueDisplay = range
+                    .closest(".primitive-control")
+                    ?.querySelector(".primitive-value");
+                if (valueDisplay) {
+                    range.addEventListener("input", () => {
+                        valueDisplay.textContent = range.value;
+                    });
+                } else {
+                    console.warn(
+                        "[interactive-article] Range input missing a .primitive-value display. " +
+                        'Wrap it in .primitive-control containing a <span class="primitive-value">.',
+                        range,
+                    );
+                }
+            });
+        }
+
+    </script>
+
+    <script>
+        // Interactive Simulator Logic
+        (function () {
+            // Initial document stack state
+            let docs = [
+                { id: 'doc-1', title: 'Dense Vector Search Overview', desc: 'Introduces similarity metrics for retrieval.', rel: 1, score: 3 },
+                { id: 'doc-2', title: 'System Benchmarking in Production', desc: 'Discusses latencies and CPU limits.', rel: 0, score: 0 },
+                { id: 'doc-3', title: 'RAG Retrieval Architectures', desc: 'Explains query rewriting and vector indexes.', rel: 1, score: 2 },
+                { id: 'doc-4', title: 'Fine-Tuning Encoder Models', desc: 'Methods to adjust bi-encoders for search tasks.', rel: 0, score: 0 },
+                { id: 'doc-5', title: 'Evaluation Frameworks for Search', desc: 'Presents MRR, MAP, and NDCG protocols.', rel: 1, score: 1 }
+            ];
+
+            let mode = 'binary'; // 'binary' or 'graded'
+
+            // Cache DOM elements
+            const stackContainer = document.getElementById('document-stack');
+            const kSlider = document.getElementById('k-slider');
+            const kValueDisplay = document.getElementById('k-value');
+            const nSlider = document.getElementById('n-slider');
+            const nValueDisplay = document.getElementById('n-value');
+
+            const btnBinary = document.getElementById('paradigm-binary');
+            const btnGraded = document.getElementById('paradigm-graded');
+
+            const valPrecision = document.getElementById('val-precision');
+            const mathPrecision = document.getElementById('math-precision');
+            const valRecall = document.getElementById('val-recall');
+            const mathRecall = document.getElementById('math-recall');
+            const valHitRate = document.getElementById('val-hitrate');
+            const mathHitRate = document.getElementById('math-hitrate');
+            const valRR = document.getElementById('val-rr');
+            const mathRR = document.getElementById('math-rr');
+            const valAP = document.getElementById('val-ap');
+            const mathAP = document.getElementById('math-ap');
+            const valNDCG = document.getElementById('val-ndcg');
+            const mathNDCG = document.getElementById('math-ndcg');
+            const cardNDCG = document.getElementById('metric-ndcg');
+
+            // Event Listeners
+            btnBinary.addEventListener('click', () => setMode('binary'));
+            btnGraded.addEventListener('click', () => setMode('graded'));
+
+            kSlider.addEventListener('input', (e) => {
+                kValueDisplay.textContent = e.target.value;
+                updateSimulator();
+            });
+
+            nSlider.addEventListener('input', (e) => {
+                nValueDisplay.textContent = e.target.value;
+                updateSimulator();
+            });
+
+            function setMode(newMode) {
+                mode = newMode;
+                if (mode === 'binary') {
+                    btnBinary.classList.add('active');
+                    btnGraded.classList.remove('active');
+                    cardNDCG.classList.add('disabled');
+                } else {
+                    btnBinary.classList.remove('active');
+                    btnGraded.classList.add('active');
+                    cardNDCG.classList.remove('disabled');
+                }
+                renderStack();
+                updateSimulator();
+            }
+
+            function swapDocs(indexA, indexB) {
+                if (indexA < 0 || indexA >= docs.length || indexB < 0 || indexB >= docs.length) return;
+                const temp = docs[indexA];
+                docs[indexA] = docs[indexB];
+                docs[indexB] = temp;
+                renderStack();
+                updateSimulator();
+            }
+
+            function toggleBinaryRelevance(index) {
+                docs[index].rel = docs[index].rel === 1 ? 0 : 1;
+                // Keep graded scores synced: 1 -> score 3, 0 -> score 0
+                docs[index].score = docs[index].rel === 1 ? 3 : 0;
+                renderStack();
+                updateSimulator();
+            }
+
+            function setGradedScore(index, score) {
+                docs[index].score = score;
+                // Keep binary relevance synced: score > 0 -> rel 1, else rel 0
+                docs[index].rel = score > 0 ? 1 : 0;
+                renderStack();
+                updateSimulator();
+            }
+
+            function renderStack() {
+                stackContainer.innerHTML = '';
+                const K = parseInt(kSlider.value);
+
+                docs.forEach((doc, idx) => {
+                    const isActiveRank = idx < K;
+                    const row = document.createElement('div');
+                    row.className = `document-row ${isActiveRank ? 'active-rank' : 'inactive'}`;
+                    row.dataset.id = doc.id;
+
+                    const rank = document.createElement('div');
+                    rank.className = 'rank-badge';
+                    rank.textContent = `Rank ${idx + 1}`;
+                    row.appendChild(rank);
+
+                    const titleWrapper = document.createElement('div');
+                    titleWrapper.className = 'doc-title-wrapper';
+
+                    const title = document.createElement('div');
+                    title.className = 'doc-title';
+                    title.textContent = doc.title;
+                    titleWrapper.appendChild(title);
+
+                    const desc = document.createElement('div');
+                    desc.className = 'doc-desc';
+                    desc.textContent = doc.desc;
+                    titleWrapper.appendChild(desc);
+
+                    row.appendChild(titleWrapper);
+
+                    // Relevance controls based on mode
+                    const relActions = document.createElement('div');
+                    relActions.className = 'relevance-actions';
+
+                    if (mode === 'binary') {
+                        const binBtn = document.createElement('button');
+                        binBtn.type = 'button';
+                        binBtn.className = `binary-btn ${doc.rel === 1 ? 'relevant' : 'irrelevant'}`;
+                        binBtn.textContent = doc.rel === 1 ? '✓ Relevant' : '✗ Irrelevant';
+                        binBtn.addEventListener('click', () => toggleBinaryRelevance(idx));
+                        relActions.appendChild(binBtn);
+                    } else {
+                        const scoreGroup = document.createElement('div');
+                        scoreGroup.className = 'graded-select-group';
+                        [3, 2, 1, 0].forEach(score => {
+                            const btn = document.createElement('button');
+                            btn.type = 'button';
+                            btn.className = `graded-score-btn ${doc.score === score ? 'active' : ''}`;
+                            btn.dataset.score = score;
+                            btn.textContent = score;
+                            btn.addEventListener('click', () => setGradedScore(idx, score));
+                            scoreGroup.appendChild(btn);
+                        });
+                        relActions.appendChild(scoreGroup);
+                    }
+                    row.appendChild(relActions);
+
+                    // Move up/down order buttons
+                    const orderControls = document.createElement('div');
+                    orderControls.className = 'row-order-controls';
+
+                    const upBtn = document.createElement('button');
+                    upBtn.type = 'button';
+                    upBtn.className = 'order-btn';
+                    upBtn.textContent = '▲';
+                    upBtn.disabled = idx === 0;
+                    upBtn.addEventListener('click', () => swapDocs(idx, idx - 1));
+
+                    const downBtn = document.createElement('button');
+                    downBtn.type = 'button';
+                    downBtn.className = 'order-btn';
+                    downBtn.textContent = '▼';
+                    downBtn.disabled = idx === docs.length - 1;
+                    downBtn.addEventListener('click', () => swapDocs(idx, idx + 1));
+
+                    orderControls.appendChild(upBtn);
+                    orderControls.appendChild(downBtn);
+                    row.appendChild(orderControls);
+
+                    stackContainer.appendChild(row);
+                });
+            }
+
+            function updateSimulator() {
+                const K = parseInt(kSlider.value);
+                const N = parseInt(nSlider.value);
+
+                // Get slice up to K
+                const slice = docs.slice(0, K);
+                const relevantInSlice = slice.filter(d => d.rel === 1).length;
+
+                // 1. Precision@K
+                const precision = relevantInSlice / K;
+                valPrecision.textContent = precision.toFixed(2);
+                mathPrecision.textContent = `${relevantInSlice} / ${K}`;
+
+                // 2. Recall@K
+                const recall = relevantInSlice / N;
+                valRecall.textContent = recall.toFixed(2);
+                mathRecall.textContent = `${relevantInSlice} / ${N}`;
+
+                // 3. Hit Rate@K
+                const hit = relevantInSlice > 0 ? 1 : 0;
+                valHitRate.textContent = hit.toFixed(2);
+                if (hit === 1) {
+                    const firstHitIdx = docs.findIndex(d => d.rel === 1);
+                    mathHitRate.textContent = `Hit at Rank ${firstHitIdx + 1}`;
+                } else {
+                    mathHitRate.textContent = 'No hits';
+                }
+
+                // 4. Reciprocal Rank (RR)
+                const firstRelIdx = docs.findIndex(d => d.rel === 1);
+                let rr = 0;
+                if (firstRelIdx !== -1 && firstRelIdx < K) {
+                    rr = 1 / (firstRelIdx + 1);
+                    valRR.textContent = rr.toFixed(2);
+                    mathRR.textContent = `1 / ${firstRelIdx + 1}`;
+                } else {
+                    valRR.textContent = '0.00';
+                    mathRR.textContent = 'No hits &le; K';
+                }
+
+                // 5. Average Precision (AP)
+                let sumP = 0;
+                let relCount = 0;
+                let mathText = '';
+                for (let i = 0; i < K; i++) {
+                    if (docs[i].rel === 1) {
+                        relCount++;
+                        const pAtRank = relCount / (i + 1);
+                        sumP += pAtRank;
+                        mathText += (mathText ? ' + ' : '') + pAtRank.toFixed(2);
+                    }
+                }
+                const ap = relCount > 0 ? sumP / relCount : 0;
+                valAP.textContent = ap.toFixed(2);
+                if (relCount > 0) {
+                    mathAP.textContent = `(${mathText}) / ${relCount}`;
+                } else {
+                    mathAP.textContent = '0';
+                }
+
+                // 6. NDCG@K
+                if (mode === 'binary') {
+                    valNDCG.textContent = '-.--';
+                    mathNDCG.textContent = 'Requires Graded Mode';
+                } else {
+                    let dcg = 0;
+                    for (let i = 0; i < K; i++) {
+                        dcg += docs[i].score / Math.log2(i + 2);
+                    }
+
+                    const sortedScores = docs.map(d => d.score).sort((a, b) => b - a);
+                    let idcg = 0;
+                    for (let i = 0; i < K; i++) {
+                        idcg += sortedScores[i] / Math.log2(i + 2);
+                    }
+
+                    const ndcg = idcg > 0 ? dcg / idcg : 0;
+                    valNDCG.textContent = ndcg.toFixed(2);
+                    mathNDCG.textContent = `DCG: ${dcg.toFixed(2)} / IDCG: ${idcg.toFixed(2)}`;
+                }
+            }
+
+            // Initialize
+            renderStack();
+            updateSimulator();
+        })();
+    </script>
+</body>
+
+</html>

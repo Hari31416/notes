@@ -120,8 +120,16 @@
             background-color: #2563eb;
         }
 
+        .pillar-card[data-theme="vector-search"]::before {
+            background-color: #06b6d4;
+        }
+
         .pillar-card[data-theme="serverless"]::before {
             background-color: #8b5cf6;
+        }
+
+        .pillar-card[data-theme="rag-metrics"]::before {
+            background-color: #10b981;
         }
 
         .pillar-num {
@@ -151,8 +159,16 @@
             color: #1d4ed8;
         }
 
+        .pillar-card[data-theme="vector-search"]:hover .pillar-title {
+            color: #0891b2;
+        }
+
         .pillar-card[data-theme="serverless"]:hover .pillar-title {
             color: #7c3aed;
+        }
+
+        .pillar-card[data-theme="rag-metrics"]:hover .pillar-title {
+            color: #059669;
         }
 
         .pillar-desc {
@@ -172,6 +188,18 @@
 
         .pillar-card[data-theme="bm25"] .pillar-link-label {
             color: #1d4ed8;
+        }
+
+        .pillar-card[data-theme="vector-search"] .pillar-link-label {
+            color: #0891b2;
+        }
+
+        .pillar-card[data-theme="serverless"] .pillar-link-label {
+            color: #7c3aed;
+        }
+
+        .pillar-card[data-theme="rag-metrics"] .pillar-link-label {
+            color: #059669;
         }
 
         .pillar-link-label::after {
@@ -269,6 +297,16 @@
                     <h2 class="pillar-title">The Serverless Paradigm</h2>
                     <p class="pillar-desc">Explore event-driven execution mechanics, infrastructure abstractions, and the economics
                         of scale in modern cloud architecture.</p>
+                </div>
+                <span class="pillar-link-label">View Note</span>
+            </a>
+            <!-- Article 4 -->
+            <a href="./rag_metrics.html" class="pillar-card" data-theme="rag-metrics">
+                <div>
+                    <span class="pillar-num">04</span>
+                    <h2 class="pillar-title">RAG Retrieval Metrics</h2>
+                    <p class="pillar-desc">Explore evaluative mathematical models for vector retrieval quality, including Precision,
+                        Recall, Hit Rate, MRR, MAP, and NDCG.</p>
                 </div>
                 <span class="pillar-link-label">View Note</span>
             </a>
